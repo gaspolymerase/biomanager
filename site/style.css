@@ -1,8 +1,12 @@
 /* BioManager website: the app's teal, light and dark.
-   Headings in Geist and labels in Geist Mono (SIL OFL, assets/fonts/OFL.txt),
+   Headings in Geist and data in Geist Mono (SIL OFL, assets/fonts/OFL.txt),
    self-hosted Latin subsets: no font CDN, which mainland China can't reach.
    Running text keeps the system font, with each system's Chinese face, and
-   no Chinese webfont is ever sent. */
+   no Chinese webfont is ever sent.
+
+   The look: the app itself is the picture. Pages are plain and left-aligned,
+   parted by hairlines like the rows of a sheet; colour is the app's teal and
+   little else, and the only things that move are the app's own clips. */
 
 @font-face {
   font-family: "Geist";
@@ -21,67 +25,53 @@
   --font-display: "Geist", var(--font-body);
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Neutrals with a little of the teal in them, rather than Apple grey. */
-  --read: #26302e;        /* running text in the guide: near black, not grey */
+  /* Neutrals with a little of the teal in them. */
+  --read: #232d2b;        /* running text in the guide: near black, not grey */
   --bg: #ffffff;
   --bg-band: #f5f8f7;
-  --fg: #121a19;
-  --fg-2: #4a5856;
-  --fg-3: #5f6d6a;
-  --line: rgba(16, 52, 46, 0.10);
+  --fg: #0f1716;
+  --fg-2: #404d4a;
+  --fg-3: #5c6966;
+  --line: rgba(15, 40, 36, 0.11);
+  --line-strong: rgba(15, 40, 36, 0.22);
   --card: #ffffff;
   --accent: #0f8f7c;      /* the app's teal: fills, icons, rings */
   --accent-ink: #0c7d6c;  /* teal text and buttons: AA on white */
   --accent-hover: #0a6b5d;
-  --accent-soft: rgba(15, 143, 124, 0.10);
+  --accent-soft: rgba(15, 143, 124, 0.09);
   --on-accent: #ffffff;
-  --grad-a: #0b7268;
-  --grad-b: #3ed0b2;
-  --shadow: 0 1px 2px rgba(10, 40, 35, 0.05), 0 12px 40px rgba(10, 40, 35, 0.10);
-  --shadow-lift: 0 2px 4px rgba(10, 40, 35, 0.06), 0 18px 48px rgba(10, 40, 35, 0.16);
-  --glass: color-mix(in srgb, var(--bg) 40%, transparent);
-  --glass-line: rgba(0, 0, 0, 0.08);
-  --glass-shine: rgba(255, 255, 255, 0.5);
-  --radius: 14px;         /* cards */
-  --radius-control: 10px; /* buttons, inputs */
-  --radius-frame: 20px;   /* screenshot frames */
-  --section: clamp(72px, 10vw, 140px);
-
-  /* The feature stage and the glass cards: dark on a dark page; on a light
-     page they turn white too (see their light rules). */
-  --stage-bg: #0b0f0e;
-  --stage-fg: #eef4f2;
-  --stage-fg-2: #9aa9a6;
-  --stage-line: rgba(255, 255, 255, 0.10);
+  --shadow: 0 1px 2px rgba(10, 40, 35, 0.06), 0 10px 32px rgba(10, 40, 35, 0.10);
+  --shadow-lift: 0 2px 4px rgba(10, 40, 35, 0.06), 0 24px 64px rgba(10, 40, 35, 0.16);
+  --radius: 12px;         /* cards */
+  --radius-control: 8px;  /* buttons, inputs */
+  --radius-frame: 14px;   /* screenshot frames */
+  --section: clamp(64px, 8vw, 112px);
+  --nav-h: 60px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --read: #d9e2e0;
-    --bg: #0f1413;
-    --bg-band: #151b1a;
+    --bg: #0e1312;
+    --bg-band: #141a19;
     --fg: #eef4f2;
-    --fg-2: #b9c6c3;
-    --fg-3: #8d9b98;
-    --line: rgba(255, 255, 255, 0.09);
-    --card: #18201f;
+    --fg-2: #bcc8c5;
+    --fg-3: #8f9d9a;
+    --line: rgba(255, 255, 255, 0.10);
+    --line-strong: rgba(255, 255, 255, 0.20);
+    --card: #171e1d;
     --accent: #2cc4a6;
     --accent-ink: #2cc4a6;
     --accent-hover: #3ed0b2;
-    --accent-soft: rgba(62, 208, 178, 0.13);
+    --accent-soft: rgba(62, 208, 178, 0.12);
     --on-accent: #06231e;
-    --grad-a: #3ed0b2;
-    --grad-b: #b5f5e6;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 48px rgba(0, 0, 0, 0.5);
-    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 22px 56px rgba(0, 0, 0, 0.6);
-    --glass-line: rgba(255, 255, 255, 0.08);
-    --glass-shine: rgba(255, 255, 255, 0.06);
-    --stage-bg: #070a09;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 36px rgba(0, 0, 0, 0.45);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 24px 64px rgba(0, 0, 0, 0.6);
   }
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 92px; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 20px); }
 body {
   margin: 0;
   background: var(--bg);
@@ -103,269 +93,273 @@ code, kbd {
 kbd { border: 1px solid var(--line); background: var(--card); }
 h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.15; margin: 0 0 0.5em; text-wrap: balance; }
 h1 {
-  font-size: clamp(2.6rem, 1.4rem + 4.8vw, 4.75rem); font-weight: 610;
-  letter-spacing: -0.04em; line-height: 1.0; max-width: 12em;
+  font-size: clamp(2.3rem, 1.5rem + 3.2vw, 3.6rem); font-weight: 620;
+  letter-spacing: -0.032em; line-height: 1.04; max-width: 15em;
 }
 h2 {
-  font-size: clamp(2rem, 1.2rem + 3vw, 3.25rem); font-weight: 600;
-  letter-spacing: -0.035em; line-height: 1.05;
+  font-size: clamp(1.7rem, 1.25rem + 1.8vw, 2.5rem); font-weight: 600;
+  letter-spacing: -0.026em; line-height: 1.1;
 }
-h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.015em; }
+h3 { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.012em; }
 h4 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 0.3em; }
 /* Chinese has no letters to tighten: big Chinese headings keep normal spacing. */
-:lang(zh) h1, :lang(zh) h2, :lang(zh) h3 { letter-spacing: -0.01em; }
-:lang(zh) h1 { line-height: 1.12; }
-:lang(zh) h2 { line-height: 1.18; }
-:lang(zh) .eyebrow { font-size: 13px; letter-spacing: 0.04em; }
+:lang(zh) h1, :lang(zh) h2, :lang(zh) h3 { letter-spacing: -0.005em; }
+/* …and break at their punctuation, not in the middle of a word (or anywhere, if a phrase is wider than the screen). */
+:lang(zh) h1, :lang(zh) h2 { word-break: keep-all; overflow-wrap: anywhere; }
+:lang(zh) h1 { line-height: 1.16; }
+:lang(zh) h2 { line-height: 1.22; }
 /* The two-tone heading: a claim, then a quieter explanation. */
 .mute { color: var(--fg-3); }
 p { margin: 0 0 1em; color: var(--fg-2); }
 
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 @media (min-width: 700px) { .wrap { padding: 0 32px; } }
 .narrow { max-width: 760px; margin-left: auto; margin-right: auto; }
 .center { text-align: center; }
-.grad {
-  background: linear-gradient(100deg, var(--grad-a), var(--grad-b));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
 
-/* ------------------------------------------------------------ the floating header */
-/* At the very top it sits on the page with no edge; once the page scrolls
-   (site.js adds .scrolled) it becomes a pane of glass over the content. */
+/* ------------------------------------------------------------ the header */
+/* A bar across the top that stays put: the pages, GitHub, the other
+   language and Download. On a phone the pages are a second row that
+   scrolls sideways, so every page is one tap away without a menu. */
 .nav {
-  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 20;
-  width: calc(100% - 24px); max-width: 1180px; height: 62px; margin: 12px auto 0;
-  border-radius: 22px; border: 1px solid transparent;
-  transition: background-color 0.25s, border-color 0.25s, box-shadow 0.25s;
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px); backdrop-filter: saturate(1.6) blur(14px);
+  border-bottom: 1px solid var(--line);
 }
-.nav.scrolled {
-  background: var(--glass);
-  -webkit-backdrop-filter: saturate(1.8) blur(12px);
-  backdrop-filter: saturate(1.8) blur(12px);
-  border-color: var(--glass-line);
-  box-shadow: inset 0 1px 0 var(--glass-shine), 0 8px 30px rgba(0, 0, 0, 0.08);
-}
-.nav.on-dark { --glass: rgba(12, 17, 16, 0.5); --glass-line: rgba(255, 255, 255, 0.1); --glass-shine: rgba(255, 255, 255, 0.06); }
-.nav.on-dark .brand, .nav.on-dark .nav-links a, .nav.on-dark .lang-link { color: rgba(238, 244, 242, 0.88); }
-.nav.on-dark .brand { color: #fff; }
-.nav.on-dark .nav-links a:hover, .nav.on-dark .nav-links a.on, .nav.on-dark .nav-links a[aria-current="page"] { color: #fff; background: rgba(255, 255, 255, 0.1); }
-.nav.on-dark .btn-primary { background: #2cc4a6; color: #06231e; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .nav.scrolled { background: color-mix(in srgb, var(--bg) 95%, transparent); }
+  .nav { background: var(--bg); }
 }
-.nav .nav-inner { display: flex; align-items: center; gap: 24px; height: 100%; padding: 0 12px 0 24px; max-width: none; }
-.nav .btn-small { min-height: 40px; padding: 0 18px; }
+.nav .nav-inner { display: flex; align-items: center; gap: 6px; min-height: var(--nav-h); }
 .brand {
   display: flex; align-items: center; gap: 9px; color: var(--fg);
   font: 600 16px/1 var(--font-display); letter-spacing: -0.02em;
 }
 .brand:hover { text-decoration: none; }
-.nav .brand { gap: 11px; font-size: 17px; }
-.nav .brand img { width: 38px; height: 38px; }
-.nav-links { display: flex; gap: 4px; margin-left: auto; font-size: 14px; font-weight: 500; }
-.nav-links a { color: var(--fg-2); padding: 7px 12px; border-radius: 980px; transition: color 0.15s, background-color 0.15s; }
+.nav .brand { margin-right: 18px; font-size: 16.5px; }
+.nav .brand img { width: 28px; height: 28px; }
+.nav-links { display: flex; gap: 2px; margin-right: auto; font-size: 14.5px; font-weight: 500; }
+.nav-links a { color: var(--fg-2); padding: 7px 11px; border-radius: 8px; white-space: nowrap; }
 .nav-links a:hover { color: var(--fg); text-decoration: none; background: var(--accent-soft); }
-.nav-links a.on, .nav-links a[aria-current="page"] { color: var(--fg); background: var(--accent-soft); }
-.lang-link { margin-left: 4px; font-size: 14px; font-weight: 500; color: var(--fg-2); white-space: nowrap; padding: 6px 8px; }
-.lang-link:hover { color: var(--fg); text-decoration: none; }
-.nav .btn { margin-left: 4px; }
-@media (max-width: 760px) {
-  .nav-links { display: none; }
-  .lang-link { margin-left: auto; }
+.nav-links a[aria-current="page"] { color: var(--accent-ink); font-weight: 600; }
+.nav-gh, .lang-link {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 8px;
+  font-size: 14.5px; font-weight: 500; color: var(--fg-2); white-space: nowrap;
+}
+.nav-gh:hover, .lang-link:hover { color: var(--fg); text-decoration: none; background: var(--accent-soft); }
+.nav-gh svg { width: 17px; height: 17px; fill: currentColor; }
+.nav .btn { margin-left: 8px; }
+@media (max-width: 1000px) { .nav-gh span { display: none; } }
+@media (max-width: 800px) {
+  :root { --nav-h: 100px; }
+  .nav .nav-inner { flex-wrap: wrap; gap: 0 4px; min-height: 0; }
+  .nav .brand { margin-right: auto; min-height: 54px; }
+  .nav-gh { display: none; }
+  .nav-links {
+    order: 5; flex: 0 0 calc(100% + 32px); margin: 0 -16px; padding: 0 8px 8px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
 }
 
 /* ------------------------------------------------------------ buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 44px; padding: 0 20px;
-  border-radius: var(--radius-control);
+  min-height: 44px; padding: 0 18px;
+  border-radius: var(--radius-control); border: 1px solid var(--line-strong);
   font: 600 15px/1 var(--font-body);
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  color: var(--fg); background: var(--card);
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
-.btn:hover { text-decoration: none; transform: translateY(-1px); box-shadow: var(--shadow); }
-.btn-primary { background: var(--accent-ink); color: var(--on-accent); }
+.btn:hover { text-decoration: none; border-color: var(--accent); color: var(--accent-ink); }
+.btn-primary { background: var(--accent-ink); border-color: transparent; color: var(--on-accent); }
 @media (prefers-color-scheme: dark) { .btn-primary { background: var(--accent); } }
-.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 20px rgba(15, 143, 124, 0.32); }
-.btn-large { min-height: 50px; padding: 0 24px; font-size: 16px; }
-.btn-small { min-height: 34px; padding: 0 14px; font-size: 14px; border-radius: 980px; }
+.btn-primary:hover { background: var(--accent-hover); border-color: transparent; color: var(--on-accent); }
+.btn-large { min-height: 50px; padding: 0 22px; font-size: 16px; }
+.btn-small { min-height: 36px; padding: 0 14px; font-size: 14px; }
+.btn svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+.btn-quiet .star { color: #e3a008; }
 
-/* ------------------------------------------------------------ hero */
-.hero { padding: clamp(40px, 6vw, 80px) 0 0; overflow: hidden; }
-.hero h1 { margin-bottom: 0.32em; }
-.eyebrow {
-  font: 500 12px/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--accent-ink); margin: 0 0 14px;
+/* ------------------------------------------------------------ the front page's opening */
+/* The one loud part of the site: a band the colour of a dark room, in light
+   and dark alike. Behind the words a double helix made of points of light
+   turns slowly (drawn on a canvas by site.js, with the proportions of real
+   DNA) over soft teal and blue light; under them the app itself plays in a
+   window that leans back and stands up as the page scrolls, lit from
+   behind, with a light running round its edge. The window hangs below the
+   band's lower edge, into the page. */
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.hero-night {
+  --hang: clamp(40px, 12vw, 170px);
+  position: relative; isolation: isolate; display: flow-root; text-align: center; color: #eef4f2;
+  background: #04100e;
+  /* under the header, which is dark glass over it */
+  margin: calc(-1px - var(--nav-h)) 0 var(--hang); padding: calc(var(--nav-h) + clamp(44px, 6.5vw, 92px)) 0 0;
 }
+.hero-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+/* Soft light, adrift behind the helix. */
+.hg-light i {
+  position: absolute; width: 46vw; aspect-ratio: 1; border-radius: 50%; opacity: 0.85;
+  background: radial-gradient(closest-side, var(--c), transparent);
+  animation: hg-drift var(--t, 20s) ease-in-out var(--d, 0s) infinite alternate;
+}
+.hg-light i:nth-child(1) { --c: #0f8f7c; left: 0%; top: 6%; --t: 19s; }
+.hg-light i:nth-child(2) { --c: #1d5fb0; left: 34%; top: 40%; --t: 23s; --d: -8s; }
+.hg-light i:nth-child(3) { --c: #2cc4a6; left: 62%; top: 2%; --t: 17s; --d: -4s; opacity: 0.5; }
+.hg-light i:nth-child(4) { --c: #1d5fb0; left: 70%; top: 52%; --t: 25s; --d: -12s; }
+@keyframes hg-drift { from { transform: translate(-5vw, -3vh); } to { transform: translate(5vw, 4vh); } }
+/* The helix: without scripts there is only the light. */
+.hero-helix { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+/* Quiet behind the words. */
+.hero-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(50% 300px at 50% 270px, rgba(4, 16, 14, 0.66), transparent 100%);
+}
+
+.hero-night h1 {
+  font-size: clamp(2.6rem, 1.3rem + 5.2vw, 5.1rem); letter-spacing: -0.04em; line-height: 1;
+  max-width: 13em; margin: 0 auto 0.34em; color: #fff;
+}
+:lang(zh) .hero-night h1 { letter-spacing: 0; line-height: 1.14; }
+.grad {
+  background: linear-gradient(100deg, #3ed0b2 10%, #86d4ff 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero-night .lede { margin: 0 auto 30px; max-width: 37em; color: rgba(238, 244, 242, 0.76); }
+.hero-night .cta { justify-content: center; }
+.hero-night .btn { color: #fff; background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.18); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.hero-night .btn:hover { background: rgba(255, 255, 255, 0.13); border-color: rgba(255, 255, 255, 0.34); color: #fff; }
+.hero-night .btn-primary { color: #04211c; background: #3ed0b2; border-color: transparent; box-shadow: 0 10px 34px rgba(62, 208, 178, 0.36); }
+.hero-night .btn-primary:hover { color: #04211c; background: #63dfc5; border-color: transparent; }
+/* The release, in a pill above the headline. */
+.release {
+  display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 12px;
+  margin: 0 0 26px; padding: 5px 14px 5px 6px; border-radius: 999px;
+  font-size: 13.5px; line-height: 1.4; color: rgba(238, 244, 242, 0.8);
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.release-v { padding: 2px 10px; border-radius: 999px; color: #04211c; background: #3ed0b2; font-weight: 600; }
+.release-v b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.release a { color: #eef4f2; font-weight: 500; }
+.eyebrow { font: 600 14px/1.4 var(--font-body); color: var(--accent-ink); margin: 0 0 12px; }
 .lede {
-  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.375rem); line-height: 1.5;
-  max-width: 34em; margin: 0 0 32px; color: var(--fg-2);
+  font-size: clamp(1.1rem, 1rem + 0.45vw, 1.3rem); line-height: 1.5;
+  max-width: 35em; margin: 0 0 28px; color: var(--fg-2);
 }
-.cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.cta { display: flex; gap: 10px; flex-wrap: wrap; }
 .cta.center { justify-content: center; }
 .fine { font-size: 14px; color: var(--fg-3); margin-top: 18px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 28px 0 0; max-width: 820px; padding: 0; list-style: none; }
-.chips li {
-  font: 500 12px/1 var(--font-mono); letter-spacing: 0.02em; padding: 7px 10px; border-radius: 980px;
-  background: var(--card); border: 1px solid var(--line); color: var(--fg-2);
-}
-.caption { font-size: 14px; color: var(--fg-3); margin-top: 16px; text-align: center; }
+.caption { font-size: 14px; color: var(--fg-3); margin-top: 14px; }
 
-/* The product shot: tilted back, with the teal glowing behind it, and
-   flattening as the page scrolls (where the browser can drive animation
-   from scrolling; elsewhere it stays gently tilted). */
-.hero-stage { position: relative; margin-top: clamp(48px, 7vw, 88px); perspective: 1800px; isolation: isolate; }
-.hero-stage::before {
-  content: ""; position: absolute; z-index: -1; inset: 6% 8% auto; height: 80%;
-  background: radial-gradient(closest-side, rgba(62, 208, 178, 0.38), rgba(62, 208, 178, 0.12) 60%, transparent);
-  filter: blur(40px);
+/* The tour, inside the opening: a row of tabs, and the window that plays
+   the clip of the one chosen. */
+.tour { margin-top: clamp(44px, 6vw, 76px); }
+.tour h2 {
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.4rem); font-weight: 500; letter-spacing: -0.01em;
+  max-width: none; margin: 0 0 18px; color: rgba(238, 244, 242, 0.92);
 }
-.hero-shot { max-width: 1080px; margin: 0 auto; transform-origin: 50% 0; transform: rotateX(12deg) scale(0.97); }
+.tour h2 .mute { color: rgba(238, 244, 242, 0.58); }
+.tour-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 6px 16px 8px; }
+.tour-tabs::-webkit-scrollbar { display: none; }
+.tour-tabs button:first-child { margin-left: auto; }
+.tour-tabs button:last-child { margin-right: auto; }
+.tour-tabs button {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 15px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); color: rgba(238, 244, 242, 0.82);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font: 500 14.5px/1.3 var(--font-body);
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.2s;
+}
+.tour-tabs button svg { flex: none; width: 17px; height: 17px; fill: currentColor; opacity: 0.8; }
+.tour-tabs button b { font-weight: inherit; }
+.tour-tabs button small { display: none; }
+.tour-tabs button:hover { color: #fff; background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.28); }
+.tour-tabs button[aria-selected="true"] {
+  color: #04211c; font-weight: 600; background: #3ed0b2; border-color: transparent;
+  box-shadow: 0 0 0 4px rgba(62, 208, 178, 0.16), 0 8px 26px rgba(62, 208, 178, 0.34);
+}
+.tour-tabs button[aria-selected="true"] svg { opacity: 1; }
+.tour-tabs button:focus-visible { outline: 2px solid #b5f5e6; outline-offset: 2px; border-radius: 999px; }
+@media (min-width: 900px) { .tour-tabs { flex-wrap: wrap; justify-content: center; overflow: visible; } .tour-tabs button:first-child, .tour-tabs button:last-child { margin: 0; } }
+.stage-frame {
+  position: relative; isolation: isolate; max-width: 1060px; margin: 18px auto calc(-1 * var(--hang));
+  border-radius: var(--radius);
+}
+.stage-frame::before {   /* the light behind the window */
+  content: ""; position: absolute; z-index: -1; inset: 2% -6% -4%;
+  background: radial-gradient(closest-side, rgba(62, 208, 178, 0.5), rgba(45, 127, 214, 0.22) 62%, transparent);
+  filter: blur(64px);
+}
+.stage-frame::after {    /* the light running round its edge */
+  content: ""; position: absolute; inset: -1.5px; border-radius: calc(var(--radius) + 1.5px); padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--spin), rgba(255, 255, 255, 0.14) 0 58%, #3ed0b2 74%, #9bdcff 84%, rgba(255, 255, 255, 0.14) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin 7s linear infinite;
+}
+@keyframes spin { to { --spin: 360deg; } }
+.hero-night .stage-window { border-color: transparent; box-shadow: 0 40px 110px rgba(0, 0, 0, 0.55); }
+/* The window leans back, and stands up as the page scrolls (where the
+   browser can drive animation from scrolling; elsewhere it simply stands). */
 @supports (animation-timeline: scroll()) {
-  .hero-shot {
-    animation: flatten linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0 60vh;
+  @media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+    .stage-frame { transform-origin: 50% 0; animation: stand linear both; animation-timeline: scroll(root); animation-range: 0 52vh; }
+    @keyframes stand { from { transform: perspective(1700px) rotateX(15deg) scale(0.95); } to { transform: perspective(1700px) rotateX(0deg) scale(1); } }
   }
-  @keyframes flatten { to { transform: rotateX(0deg) scale(1); } }
+}
+/* Arriving, once: the words rise into place one after another, then the window. */
+@keyframes arrive { from { opacity: 0; transform: translateY(16px); } }
+.hero-night .release { animation: arrive 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-night h1 { animation: arrive 0.8s 0.06s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-night .lede { animation: arrive 0.8s 0.14s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-night .cta { animation: arrive 0.8s 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero-night .tour { animation: arrive 0.9s 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@media (max-width: 640px) {
+  .hero-bg::after { background: radial-gradient(100% 280px at 50% 240px, rgba(4, 16, 14, 0.62), transparent 100%); }
+}
+/* Over that band the header is dark too (site.js adds .on-dark while it is). */
+.nav.on-dark { background: rgba(4, 16, 14, 0.72); border-bottom-color: rgba(255, 255, 255, 0.08); }
+.nav.on-dark .brand { color: #fff; }
+.nav.on-dark .nav-links a, .nav.on-dark .nav-gh, .nav.on-dark .lang-link { color: rgba(238, 244, 242, 0.82); }
+.nav.on-dark .nav-links a:hover, .nav.on-dark .nav-gh:hover, .nav.on-dark .lang-link:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.nav.on-dark .btn-primary { background: #3ed0b2; color: #04211c; }
+
+/* Under the window: what the chosen clip shows, then the facts someone
+   choosing software looks for, set out like a record. */
+.hero-after { padding: 22px 0 clamp(48px, 6vw, 80px); }
+.stage-caption { max-width: 44em; min-height: 4.8em; margin: 0 auto; text-align: center; font-size: 1.06rem; line-height: 1.55; color: var(--fg-2); }
+.stage-caption b { color: var(--fg); font-weight: 600; }
+.facts { margin: clamp(28px, 4vw, 48px) 0 0; border-top: 1px solid var(--line-strong); font-size: 15px; line-height: 1.45; }
+.facts > div { display: grid; grid-template-columns: 7.2em minmax(0, 1fr); gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.facts dt { color: var(--fg-3); }
+.facts dd { margin: 0; color: var(--fg); font-weight: 500; }
+@media (min-width: 800px) {
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 40px; border-top: 0; }
+  .facts > div { grid-template-columns: 1fr; gap: 3px; padding: 14px 0 0; border-bottom: 0; border-top: 1px solid var(--line-strong); }
 }
 
-/* Entrance, once: the headline sharpens into place and the rest follows. */
-@keyframes blur-in { from { opacity: 0; filter: blur(10px); transform: translateY(8px); } }
-.hero h1 { animation: blur-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.hero .lede { animation: blur-in 0.9s 0.12s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.hero .cta { animation: blur-in 0.9s 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.hero .fine, .hero .chips { animation: blur-in 0.9s 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-
-/* A macOS window around each screenshot. */
+/* A window around each screenshot and clip. */
 .window {
-  margin: 0; border-radius: 12px; overflow: hidden;
-  background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow);
+  margin: 0; border-radius: var(--radius); overflow: hidden;
+  background: var(--card); border: 1px solid var(--line-strong); box-shadow: var(--shadow-lift);
 }
 .window-bar {
   display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px;
   background: var(--bg-band); border-bottom: 1px solid var(--line);
-  font: 500 12px/1 var(--font-mono); color: var(--fg-3);
+  font: 500 12px/1 var(--font-body); color: var(--fg-3);
 }
-.window-bar i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; flex: none; }
-.window-bar i:nth-child(2) { background: #febc2e; }
-.window-bar i:nth-child(3) { background: #28c840; }
-.window-bar span { flex: 1; text-align: center; margin-right: 50px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.window-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); flex: none; }
+.window-bar span { flex: 1; text-align: center; margin-right: 44px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ------------------------------------------------------------ sections */
-.section { padding: var(--section) 0; }
-.band { background: var(--bg-band); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.section h2 { max-width: 18em; }
-.section-head { margin-bottom: clamp(40px, 6vw, 72px); }
-.section-first { padding-top: clamp(24px, 4vw, 48px); }
-
-/* A page's own heading, under the header (Features, Download). */
-.page-head { padding: clamp(48px, 7vw, 96px) 0 0; }
-.page-head h1 { font-size: clamp(2.3rem, 1.4rem + 3.4vw, 3.75rem); max-width: 16em; margin-bottom: 0.4em; }
-.page-head .lede { margin-bottom: 0; }
-
-/* The front page's promises side by side, and where to go next. */
-@media (min-width: 800px) {
-  .promises-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-  .promises.promises-row li, .promises.promises-row li:first-child { border-top: 1px solid var(--line); padding: 20px 0 0; }
-}
-.card.next { display: block; color: inherit; }
-.card.next:hover { text-decoration: none; border-color: var(--accent); }
-.card.next h3::after { content: " →"; color: var(--accent-ink); }
-
-/* Sections rise into place as they scroll in, where the browser can drive
-   that from scrolling. Without it (or without scripts) everything simply shows. */
-@supports (animation-timeline: view()) {
-  .rise {
-    animation: rise linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 35%;
-  }
-  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
-}
-
-/* A database's own icon, white on its colour. */
-.ic {
-  flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 11px;
-  color: #fff; background: linear-gradient(160deg, var(--ic-a, #3ed0b2), var(--ic-b, #0b7268));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(10, 40, 35, 0.16);
-}
-.ic svg { width: 20px; height: 20px; fill: currentColor; }
-.ic-teal   { --ic-a: #3ed0b2; --ic-b: #0b7268; }
-.ic-orange { --ic-a: #ffb35c; --ic-b: #d9661a; }
-.ic-blue   { --ic-a: #7aa7ff; --ic-b: #3a5bd6; }
-.ic-purple { --ic-a: #b79cff; --ic-b: #6a43d6; }
-.ic-pink   { --ic-a: #ff8fb1; --ic-b: #d2386c; }
-.ic-green  { --ic-a: #8fdc6a; --ic-b: #3a9a2c; }
-.ic-amber  { --ic-a: #ffd166; --ic-b: #c98a00; }
-.ic-slate  { --ic-a: #9fb1b8; --ic-b: #4c636b; }
-
-.trio { display: grid; gap: 32px; padding-top: 56px; padding-bottom: 56px; }
-@media (min-width: 800px) { .trio { grid-template-columns: repeat(3, 1fr); gap: 48px; } }
-.trio .ic { margin-bottom: 16px; }
-.trio p { margin: 0; }
-
-/* The tour: alternating text and screenshot rows, each picture in a soft frame. */
-.row { display: grid; gap: 28px; align-items: center; margin-top: clamp(56px, 8vw, 104px); }
-@media (min-width: 900px) {
-  .row { grid-template-columns: 5fr 7fr; gap: 64px; }
-  .row.flip { grid-template-columns: 7fr 5fr; }
-  .row.flip .row-text { order: 2; }
-}
-.row-text h3 { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; letter-spacing: -0.02em; }
-.row-text p { font-size: 17px; max-width: 34em; }
-.frame {
-  border-radius: var(--radius-frame); padding: clamp(10px, 1.6vw, 18px);
-  background: linear-gradient(160deg, var(--accent-soft), var(--bg-band) 70%);
-  border: 1px solid var(--line);
-}
-.frame .window { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px rgba(10, 40, 35, 0.10); }
-.ticks { list-style: none; padding: 0; margin: 0; max-width: 34em; }
-.ticks li { position: relative; padding-left: 26px; margin: 8px 0; color: var(--fg-2); }
-.ticks li::before {
-  content: ""; position: absolute; left: 2px; top: 0.45em; width: 14px; height: 14px; border-radius: 50%;
-  background: var(--accent-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%2317a38f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;
-}
-
-/* ------------------------------------------------------------ the feature stage */
-/* The page's one dark band: a window that plays a short clip of each
-   feature, and a dock of the app's icons beneath it that switches the clip. */
-.stage {
-  position: relative; isolation: isolate; overflow: hidden;
-  background: var(--stage-bg); color: var(--stage-fg);
-  padding: clamp(64px, 8vw, 112px) 0 clamp(56px, 7vw, 96px);
-}
-.stage::before {
-  content: ""; position: absolute; z-index: -1; left: 50%; top: 22%; width: min(1100px, 120vw); height: 70%;
-  translate: -50% 0;
-  background: radial-gradient(closest-side, rgba(44, 196, 166, 0.42), rgba(44, 196, 166, 0.10) 55%, transparent);
-  filter: blur(50px);
-  animation: drift 12s ease-in-out infinite alternate;
-}
-@keyframes drift {
-  from { transform: translate(-4%, -2%) scale(1); }
-  to   { transform: translate(4%, 3%) scale(1.08); }
-}
-.stage .eyebrow { color: #2cc4a6; }
-.stage h2 {
-  color: var(--stage-fg); margin-inline: auto; text-align: center; max-width: 20em;
-  font-size: clamp(1.9rem, 1.2rem + 2.2vw, 2.75rem);
-}
-.stage h2 .mute { color: var(--stage-fg-2); }
-.stage-window {
-  max-width: 1000px; margin: clamp(28px, 4vw, 44px) auto 0;
-  background: #111716; border-color: var(--stage-line);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 30px 80px rgba(0, 0, 0, 0.6);
-}
-.stage-window .window-bar { background: #161d1c; border-bottom-color: var(--stage-line); color: var(--stage-fg-2); }
-.stage-screen { position: relative; aspect-ratio: 1280 / 786; background: #0e1312; }
+/* ------------------------------------------------------------ clips */
+.stage-screen { position: relative; aspect-ratio: 1280 / 786; background: var(--bg-band); }
 .stage-screen video, .stage-screen img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.2s ease;
 }
-.stage-screen.swapping video { opacity: 0; transform: scale(0.985); }
+.stage-screen.swapping video { opacity: 0; }
 /* A clip that is the app itself, replayed (bmClips in site.js): its still,
    then the pages, drawn by this browser, over it once they have loaded. */
 .live-clip { position: relative; overflow: hidden; aspect-ratio: 1280 / 786; background: inherit; }
@@ -388,12 +382,12 @@ p { margin: 0 0 1em; color: var(--fg-2); }
   border-radius: 50%; background: rgba(0, 0, 0, 0.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 6.5v11l9-5.5z' fill='%23fff'/%3E%3C/svg%3E") center / 30px no-repeat;
 }
 .live-clip.calm.playing::after { display: none; }
-.stage-screen .live-clip { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 0.25s ease, transform 0.25s ease; }
-.stage-screen.swapping .live-clip { opacity: 0; transform: scale(0.985); }
+.stage-screen .live-clip { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 0.2s ease; }
+.stage-screen.swapping .live-clip { opacity: 0; }
 .doc-clip .live-clip { background: var(--bg-band); }
 .clip-dialog .live-clip { background: #0e1312; }
-/* The clips on the front page and Features play by themselves: no browser's
-   own play button over them (Safari draws one when it holds a clip back). */
+/* The clips play by themselves: no browser's own play button over them
+   (Safari draws one when it holds a clip back). */
 .stage-screen video::-webkit-media-controls, .clip-dialog video::-webkit-media-controls,
 .ai-clip video::-webkit-media-controls { display: none !important; }
 .stage-screen video::-webkit-media-controls-start-playback-button, .clip-dialog video::-webkit-media-controls-start-playback-button,
@@ -401,105 +395,251 @@ p { margin: 0 0 1em; color: var(--fg-2); }
 .stage-screen video::-webkit-media-controls-overlay-play-button, .clip-dialog video::-webkit-media-controls-overlay-play-button,
 .ai-clip video::-webkit-media-controls-overlay-play-button { display: none !important; }
 
-.dock {
-  display: flex; justify-content: center; align-items: flex-end; gap: 12px;
-  margin: 36px auto 0; padding: 22px 12px 4px; max-width: 100%;
+/* ------------------------------------------------------------ sections */
+.section { padding: var(--section) 0; }
+.band { background: var(--bg-band); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.band + .band, .band + .footer { border-top: 0; }
+.section h2 { max-width: 20em; }
+:lang(zh) .section h2 { max-width: 28em; }
+.section-head { margin-bottom: clamp(28px, 4vw, 48px); }
+.section-head p { max-width: 38em; margin: 0; font-size: 1.08rem; }
+.section-first { padding-top: clamp(24px, 4vw, 48px); }
+
+/* A page's own heading, under the header (Features, Download). */
+.page-head { padding: clamp(40px, 6vw, 80px) 0 0; }
+.page-head h1 { font-size: clamp(2.1rem, 1.4rem + 2.8vw, 3.25rem); max-width: 17em; margin-bottom: 0.4em; }
+.page-head .lede { margin-bottom: 0; }
+/* The page's sections, as links under its heading. */
+.jump { display: flex; flex-wrap: wrap; gap: 4px 28px; margin-top: 32px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.jump a { padding: 10px 0; color: var(--fg-2); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.jump a:hover { color: var(--accent-ink); border-bottom-color: var(--accent); text-decoration: none; }
+
+/* An icon on a tint of its own colour. */
+.ic {
+  --ic: var(--accent-ink);
+  flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 9px;
+  color: var(--ic); background: color-mix(in srgb, var(--ic) 11%, transparent);
 }
-.dock button {
-  position: relative; flex: none; display: grid; place-items: center;
-  width: 56px; height: 56px; border-radius: 16px; cursor: pointer; padding: 0;
-  color: rgba(238, 244, 242, 0.78);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 18px rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), width 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
-    height 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.2s, color 0.2s, background-color 0.2s;
-}
-.dock button svg { width: 24px; height: 24px; fill: currentColor; }
-.dock button:hover { transform: translateY(-2px) scale(1.05); color: #fff; }
-.dock button[aria-selected="true"] {
-  width: 64px; height: 64px; transform: translateY(-6px); color: #fff;
-  border-color: rgba(62, 208, 178, 0.65);
-  background: linear-gradient(180deg, rgba(62, 208, 178, 0.32), rgba(62, 208, 178, 0.10));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 28px rgba(44, 196, 166, 0.35);
-}
-.dock button:focus-visible { outline: 2px solid #2cc4a6; outline-offset: 3px; }
-.dock-tip {
-  position: absolute; bottom: calc(100% + 10px); left: 50%; translate: -50% 4px;
-  padding: 5px 9px; border-radius: 7px; white-space: nowrap; pointer-events: none;
-  font: 500 12px/1 var(--font-mono); color: var(--stage-fg);
-  background: rgba(30, 38, 37, 0.95); border: 1px solid var(--stage-line);
-  opacity: 0; transition: opacity 0.15s, translate 0.15s;
-}
-.dock button[aria-selected="true"] .dock-tip,
-.dock button:hover .dock-tip,
-.dock button:focus-visible .dock-tip { opacity: 1; translate: -50% 0; }
-.stage-caption {
-  max-width: 34em; margin: 24px auto 0; text-align: center;
-  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem); line-height: 1.5; color: var(--stage-fg-2);
-}
-.stage-caption b { color: var(--stage-fg); font-weight: 600; }
-/* A phone: the window is the screen's width, and the dock scrolls sideways. */
-@media (max-width: 640px) {
-  .stage .wrap { padding: 0; }
-  .stage .eyebrow, .stage h2, .stage-caption { padding: 0 16px; }
-  .stage-window { border-radius: 0; border-left: 0; border-right: 0; }
-  .dock {
-    justify-content: flex-start; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-    padding: 46px 16px 10px; margin-top: 4px;
-  }
-  .dock::-webkit-scrollbar { display: none; }
-  .dock button { scroll-snap-align: center; }
-  .dock button:first-child { margin-left: auto; }
-  .dock button:last-child { margin-right: auto; }
-  .dock-tip { display: none; }
+.ic svg { width: 19px; height: 19px; fill: currentColor; }
+.ic-teal   { --ic: var(--accent-ink); }
+.ic-orange { --ic: #b9560f; }
+.ic-blue   { --ic: #3458d0; }
+.ic-purple { --ic: #6a43d6; }
+.ic-pink   { --ic: #c2305f; }
+.ic-green  { --ic: #2f8a24; }
+.ic-amber  { --ic: #9a6a00; }
+.ic-slate  { --ic: #4c636b; }
+@media (prefers-color-scheme: dark) {
+  .ic-orange { --ic: #ffb35c; } .ic-blue { --ic: #8fb2ff; } .ic-purple { --ic: #b79cff; } .ic-pink { --ic: #ff8fb1; }
+  .ic-green { --ic: #8fdc6a; } .ic-amber { --ic: #ffd166; } .ic-slate { --ic: #9fb1b8; }
 }
 
-/* ------------------------------------------------------------ phone section */
-.phone-row { display: grid; gap: 40px; align-items: center; }
-@media (min-width: 900px) { .phone-row { grid-template-columns: 5fr 7fr; gap: 64px; } }
-.phone-row h2 { font-size: clamp(2rem, 1.3rem + 2vw, 2.75rem); }
-.phones { position: relative; padding-bottom: 24px; }
-.card-sheet { border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow); width: 86%; }
-.phone {
-  position: absolute; right: 0; bottom: 0; width: 34%;
-  padding: 7px; border-radius: 30px; background: #121a19; box-shadow: var(--shadow-lift);
+/* Who it is for: three columns, parted by hairlines. */
+.trio { display: grid; gap: 28px; padding-top: 48px; padding-bottom: 48px; }
+@media (min-width: 800px) {
+  .trio { grid-template-columns: repeat(3, 1fr); gap: 0; }
+  .trio > div { padding: 0 32px; border-left: 1px solid var(--line); }
+  .trio > div:first-child { padding-left: 0; border-left: 0; }
 }
-.phone img { border-radius: 24px; }
+.trio .ic { margin-bottom: 14px; }
+.trio h3 { font-size: 1.1rem; }
+.trio p { margin: 0; font-size: 16px; }
 
-/* ------------------------------------------------------------ feature cards */
+/* Pictures of it at work, above the list: a few of the app's pages, each
+   cut to the part worth looking at, linking to its guide page. */
+.bento { display: grid; gap: 16px; margin-bottom: clamp(36px, 5vw, 56px); }
+.bento a {
+  position: relative; display: block; overflow: hidden; height: 250px;
+  border-radius: 16px; border: 1px solid var(--line-strong); background: #e9f3f1;
+  box-shadow: var(--shadow);
+}
+.bento a:hover { border-color: var(--accent); }
+.bento img {
+  position: absolute; left: 0; top: 0; width: var(--w, 100%); max-width: none; height: auto;
+  transform: translate(var(--x, 0), var(--y, 0)); transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.bento a:hover img { transform: translate(var(--x, 0), var(--y, 0)) scale(1.025); }
+.bento .b-tall { height: 430px; background: linear-gradient(160deg, #c9f1e7, #cfe3fb); }
+.bento .b-tall img {
+  position: relative; display: block; width: min(64%, 250px); margin: 36px auto 0; border-radius: 26px;
+  box-shadow: 0 0 0 6px #121a19, 0 24px 50px rgba(15, 23, 42, 0.3);
+}
+.b-label {
+  position: absolute; left: 12px; bottom: 12px; padding: 8px 13px; border-radius: 9px;
+  font: 600 14.5px/1.2 var(--font-display); letter-spacing: -0.005em; color: #fff; background: rgba(13, 22, 20, 0.84);
+}
+@media (min-width: 860px) {
+  .bento { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 300px 300px; }
+  .bento a, .bento .b-tall { height: auto; }
+  .bento .b-wide { grid-column: span 2; }
+  .bento .b-tall { grid-column: 3; grid-row: 1 / span 2; }
+  .bento .b-tall img { width: min(70%, 270px); margin-top: 44px; }
+}
+
+/* What it keeps: one row for each database, as a sheet lists its records. */
+.ledger { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
+.ledger a {
+  display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 2px 14px; align-items: center;
+  padding: 14px 8px; border-bottom: 1px solid var(--line); color: inherit;
+}
+.ledger a:hover { text-decoration: none; background: var(--accent-soft); }
+.ledger .ic { grid-row: span 2; align-self: start; margin-top: 2px; }
+.ledger b { font: 600 1.05rem/1.3 var(--font-display); letter-spacing: -0.01em; color: var(--fg); }
+.ledger a:hover b { color: var(--accent-ink); }
+.ledger .what { grid-column: 2; font-size: 15.5px; line-height: 1.5; color: var(--fg-2); }
+@media (min-width: 860px) {
+  .ledger a { grid-template-columns: 36px 230px minmax(0, 1fr); gap: 20px; padding: 13px 10px; }
+  .ledger .ic { grid-row: auto; align-self: center; margin: 0; }
+  .ledger .what { grid-column: auto; }
+}
+
+/* ------------------------------------------------------------ the Features page */
+/* Each database: a picture of it in the app, which plays its clip when
+   opened, then what it does and where the guide covers it. The first two
+   run the page's width; the rest sit two across. */
+.feat-grid { display: grid; gap: 40px; }
+@media (min-width: 860px) { .feat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px 40px; } }
+.feat { display: flex; flex-direction: column; min-width: 0; }
+.feat-shot {
+  position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10;
+  border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--bg-band);
+  box-shadow: var(--shadow);
+}
+.feat-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.feat-shot.phone { display: grid; justify-items: center; }
+.feat-shot.phone picture { width: 38%; margin-top: 6%; }
+.feat-shot.phone img { height: auto; border-radius: 20px 20px 0 0; box-shadow: 0 0 0 6px #121a19, 0 18px 40px rgba(15, 23, 42, 0.28); }
+a.feat-shot:hover { border-color: var(--accent); }
+.feat-play {
+  position: absolute; left: 12px; bottom: 12px; display: none; align-items: center; gap: 7px;
+  padding: 8px 13px 8px 11px; border-radius: 8px; font: 600 13.5px/1 var(--font-body);
+  color: #fff; background: rgba(13, 22, 20, 0.84);
+}
+html.js .feat-play { display: inline-flex; }
+.feat-play svg { width: 12px; height: 12px; fill: currentColor; }
+a.feat-shot:hover .feat-play { background: var(--accent-hover); }
+.feat-body { padding-top: 20px; }
+.feat h3 { display: flex; align-items: center; gap: 11px; font-size: 1.25rem; margin-bottom: 10px; }
+.feat p { font-size: 16px; max-width: 36em; margin-bottom: 10px; }
+.feat-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; margin: 0; font-size: 15px; font-weight: 600; }
+.feat-links button {
+  display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; color: var(--accent-ink);
+}
+.feat-links button[hidden] { display: none; }
+.feat-links button:hover { text-decoration: underline; }
+.feat-links button svg { width: 12px; height: 12px; fill: currentColor; }
+@media (min-width: 860px) {
+  .feat-wide { grid-column: 1 / -1; display: grid; grid-template-columns: 5fr 7fr; gap: 48px; align-items: center; }
+  .feat-wide .feat-shot { order: 2; }
+  .feat-wide.flip { grid-template-columns: 7fr 5fr; }
+  .feat-wide.flip .feat-shot { order: 0; }
+  .feat-wide .feat-body { padding-top: 0; }
+  .feat-wide h3 { font-size: 1.6rem; letter-spacing: -0.02em; margin-bottom: 14px; }
+  .feat-wide p { font-size: 17px; }
+}
+
+/* What works the same everywhere: a row each. Its name, what it does, and
+   a sample of it in the app's own words. */
+.detail-list { border-top: 1px solid var(--line-strong); }
+.detail { display: grid; gap: 12px 32px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+@media (min-width: 920px) { .detail { grid-template-columns: 250px minmax(0, 1fr) 290px; align-items: start; } }
+.detail h3 { display: flex; align-items: center; gap: 11px; font-size: 1.1rem; margin: 0; }
+.detail p { font-size: 16px; max-width: 36em; margin: 0 0 10px; }
+.sample {
+  min-width: 0; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-band);
+  font-size: 14px; line-height: 1.45; color: var(--fg-2);
+}
+.band .sample { background: var(--card); }
+.gl-row { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gl-row b { font-weight: 600; color: var(--fg); }
+.gl-row span { margin-left: auto; padding-left: 10px; color: var(--fg-3); font: 500 12.5px var(--font-mono); }
+.gl-strong { color: var(--fg); font-weight: 600; }
+.gl-big { font: 600 1.15rem/1.3 var(--font-display); letter-spacing: -0.015em; color: var(--fg); margin-bottom: 2px; }
+.gl-mono { font: 500 13px/1.6 var(--font-mono); color: var(--fg-3); }
+.gl-mono.gl-strong { color: var(--fg); }
+.gl-pill {
+  display: inline-block; margin: 4px 0; padding: 5px 13px; border-radius: 7px; font-weight: 600; font-size: 13.5px;
+  color: var(--on-accent); background: var(--accent-ink);
+}
+.gl-field {
+  display: flex; align-items: center; gap: 2px; margin: 2px 0 6px; padding: 6px 10px; border-radius: 7px;
+  background: var(--card); border: 1px solid var(--line-strong); color: var(--fg);
+}
+.gl-field i { width: 1.5px; height: 16px; background: var(--accent); }
+.gl-grid { display: grid; grid-template-columns: repeat(3, 1fr); font-size: 13.5px; }
+.gl-grid span { padding: 5px 8px; border-bottom: 1px solid var(--line); }
+.gl-grid span:nth-last-child(-n+3) { border-bottom: 0; }
+.gl-grid span:nth-child(-n+3) { font-size: 12.5px; color: var(--fg-3); }
+.gl-grid .on { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; color: var(--fg); }
+.gl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.gl-chips span {
+  padding: 3px 8px; border-radius: 6px; font: 600 12px var(--font-mono); color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.gl-menu { display: flex; gap: 14px; padding: 2px 0 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.gl-menu b { color: var(--fg); font-weight: 600; }
+
+/* A clip in a window over the page (a picture or Watch on the Features page). */
+.clip-dialog {
+  width: min(1040px, calc(100vw - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 0; border-radius: 14px;
+  background: #0d1312; color: #eef4f2; box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6); overflow: hidden;
+}
+.clip-dialog::backdrop { background: rgba(3, 6, 5, 0.72); }
+.clip-dialog .window-bar { background: #161d1c; border-bottom: 1px solid rgba(255, 255, 255, 0.08); color: #9aa9a6; height: 40px; }
+.clip-dialog .window-bar i { background: rgba(255, 255, 255, 0.16); }
+.clip-dialog .clip-close {
+  margin-left: auto; width: 28px; height: 28px; border-radius: 8px; border: 0; cursor: pointer;
+  background: rgba(255, 255, 255, 0.08); color: #eef4f2; font-size: 18px; line-height: 1;
+}
+.clip-dialog .window-bar span { margin-right: 0; }
+.clip-dialog video { display: block; width: 100%; aspect-ratio: 1280 / 786; background: #0e1312; }
+.clip-dialog .clip-text { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; padding: 16px 20px 18px; }
+.clip-dialog .clip-text p { margin: 0; flex: 1 1 320px; color: rgba(238, 244, 242, 0.8); font-size: 15.5px; }
+.clip-dialog .clip-text b { color: #fff; }
+.clip-dialog .clip-text a { color: #5fe0c6; font-weight: 600; white-space: nowrap; }
+
+/* ------------------------------------------------------------ cards */
 .grid { display: grid; gap: 16px; }
 @media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
 .card {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 24px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  padding: 24px; transition: border-color 0.15s;
 }
-.card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-.card .ic { margin-bottom: 16px; }
+.card .ic { margin-bottom: 14px; }
 .card h3 { font-size: 1.1rem; }
-.card p { font-size: 15px; margin: 0; }
+.card p { font-size: 15.5px; margin: 0; }
+.card.next { display: block; color: inherit; }
+.card.next:hover { text-decoration: none; border-color: var(--accent); }
+.card.next:hover h3 { color: var(--accent-ink); }
 .duo { display: grid; gap: 16px; }
 @media (min-width: 800px) { .duo { grid-template-columns: 1fr 1fr; } }
-.card.big { padding: 32px; }
+.card.big { padding: clamp(22px, 3vw, 32px); }
+.card.big h3 { font-size: 1.3rem; }
 .card.big p { font-size: 16px; margin-bottom: 22px; }
+
+/* The promises: three across on the front page, a list beside the downloads. */
+.promises { list-style: none; margin: 0; padding: 0; }
+.promises li { padding: 18px 0; border-top: 1px solid var(--line); color: var(--fg-2); font-size: 16px; }
+.promises li:first-child { border-top: 0; padding-top: 4px; }
+.promises b { display: block; margin-bottom: 4px; color: var(--fg); font: 600 1.12rem/1.3 var(--font-display); letter-spacing: -0.012em; }
+@media (min-width: 800px) {
+  .promises-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .promises.promises-row li, .promises.promises-row li:first-child { border-top: 1px solid var(--line-strong); padding: 18px 0 0; }
+}
 
 /* ------------------------------------------------------------ download */
 .get { display: grid; gap: 40px; align-items: start; }
 @media (min-width: 900px) { .get { grid-template-columns: 5fr 7fr; gap: 64px; } }
-.promises { list-style: none; margin: 0; padding: 0; }
-.promises li { padding: 18px 0; border-top: 1px solid var(--line); color: var(--fg-2); font-size: 16px; }
-.promises li:first-child { border-top: 0; padding-top: 4px; }
-.promises b { display: block; margin-bottom: 4px; color: var(--fg); font: 600 1.15rem/1.3 var(--font-display); letter-spacing: -0.015em; }
 .downloads { display: grid; gap: 12px; }
 @media (min-width: 520px) { .downloads { grid-template-columns: repeat(2, 1fr); } }
 .dl {
   display: flex; flex-direction: column; gap: 4px; padding: 18px 20px;
-  border-radius: var(--radius); border: 1px solid var(--line); background: var(--card);
-  color: var(--fg); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--card);
+  color: var(--fg); transition: border-color 0.15s;
 }
-.dl:hover { text-decoration: none; transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--accent); }
+.dl:hover { text-decoration: none; border-color: var(--accent); }
 .dl.mine { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .dl-os { font: 600 18px/1.2 var(--font-display); letter-spacing: -0.015em; }
 .dl-os::after { content: " ↓"; color: var(--accent-ink); }
@@ -509,14 +649,9 @@ p { margin: 0 0 1em; color: var(--fg-2); }
    from GitHub when it answers), and the invitation to star and give feedback. */
 .dl-version { font-size: 14px; color: var(--fg-3); margin: 0 0 14px; }
 .dl-version b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
-.btn svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
-.btn-quiet { background: var(--card); color: var(--fg); border: 1px solid var(--line); }
-.btn-quiet:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
-.btn-quiet .star { color: #e3a008; }
 .gh-cta {
   display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 28px; padding: 22px 24px;
-  border-radius: var(--radius); border: 1px solid var(--line);
-  background: linear-gradient(120deg, var(--accent-soft), transparent 70%), var(--card);
+  border-radius: var(--radius); border: 1px solid var(--line); background: var(--card);
 }
 .gh-cta > div:first-child { flex: 1 1 320px; }
 .gh-cta h3 { margin: 0 0 4px; font-size: 1.15rem; }
@@ -556,25 +691,34 @@ details p { font-size: 16px; }
 details ul { font-size: 16px; padding-left: 1.3em; margin: 0 0 14px; }
 details li { margin: 8px 0; }
 
-/* Footer */
-.footer { padding: 48px 0 64px; border-top: 1px solid var(--line); }
-.footer-inner { display: grid; gap: 14px; }
-.footer p { font-size: 13px; color: var(--fg-3); margin: 0; max-width: 760px; }
-.footer-gh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding-bottom: 18px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
-.footer-gh p { flex: 1 1 340px; font-size: 14px; color: var(--fg-2); }
-.footer-gh .btn { min-height: 36px; padding: 0 14px; font-size: 14px; }
+/* ------------------------------------------------------------ footer */
+/* Every page ends the same way: the invitation to star or write, the
+   site's pages in three lists, and the licences. */
+.footer { padding: 56px 0 48px; border-top: 1px solid var(--line); background: var(--bg-band); font-size: 14.5px; }
+.footer-top { display: grid; gap: 40px; }
+@media (min-width: 900px) { .footer-top { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 72px; } }
+.footer-about .brand { margin-bottom: 14px; }
+.footer-about p { max-width: 30em; margin: 0 0 18px; font-size: 14.5px; color: var(--fg-2); }
+.footer-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.footer-btns .btn { min-height: 36px; padding: 0 13px; font-size: 14px; }
+.footer-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
+@media (min-width: 560px) { .footer-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.footer-h { margin: 0 0 10px; font: 600 14px/1.4 var(--font-display); color: var(--fg); }
+.footer-cols ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.footer-cols a { color: var(--fg-2); }
+.footer-cols a:hover { color: var(--accent-ink); }
+.footer-legal { margin: 44px 0 0; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--fg-3); max-width: none; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
-  .hero-shot { transform: rotateX(6deg) scale(0.985); }
 }
 
 /* ------------------------------------------------------------ user guide */
 .guide { display: grid; gap: 40px; padding-top: 40px; padding-bottom: 80px; }
 @media (min-width: 960px) { .guide { grid-template-columns: 230px minmax(0, 1fr); gap: 56px; } }
 .toc { font-size: 14.5px; line-height: 1.45; }
-@media (min-width: 960px) { .toc { position: sticky; top: 96px; align-self: start; max-height: calc(100vh - 112px); overflow: auto; } }
+@media (min-width: 960px) { .toc { position: sticky; top: 84px; align-self: start; max-height: calc(100vh - 100px); overflow: auto; } }
 @media (max-width: 959px) {
   .toc { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; background: var(--bg-band); }
 }
@@ -624,7 +768,7 @@ details li { margin: 8px 0; }
 .gtable tr:last-child th, .gtable tr:last-child td { border-bottom: 1px solid var(--line); }
 .gtable th { width: 130px; color: var(--fg); font-weight: 620; }
 .gtable td { color: var(--read); }
-.gtable thead th { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3);
+.gtable thead th { font-size: 13.5px; font-weight: 600; color: var(--fg-3);
   border-top: 0; padding-bottom: 8px; }
 @media (max-width: 560px) { .gtable th { width: 96px; } .gtable th, .gtable td { padding: 10px 8px; } }
 
@@ -693,7 +837,7 @@ blockquote.req {
 .gtable.map th { width: 42%; white-space: normal; }
 .map td b { color: var(--fg); }
 .part { margin: 48px 0 0; padding-top: 18px; border-top: 2px solid var(--accent); }
-.part-label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; font-weight: 700; color: var(--accent-ink); margin: 0; }
+.part-label { font-size: 13.5px; font-weight: 600; color: var(--accent-ink); margin: 0; }
 /* A part names a group of sections; the section right after it carries the
    big heading, so the part's own title is smaller. */
 .guide-body .part h2 { margin-top: 4px; font-size: 1.35rem; font-weight: 650; color: var(--fg-2); }
@@ -703,8 +847,7 @@ blockquote.req {
    sections sit indented under it along a thin line, which turns teal
    beside the section being read. */
 .toc .toc-part {
-  margin: 22px 0 6px; padding-left: 8px; font-size: 12px; font-weight: 750; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--accent-ink);
+  margin: 22px 0 6px; padding-left: 8px; font: 600 13px/1.4 var(--font-display); color: var(--fg);
 }
 .toc .toc-part:first-child { margin-top: 4px; }
 .toc ol:has(.toc-part) > li:not(.toc-part) { margin-left: 10px; padding-left: 8px; border-left: 1.5px solid var(--line); }
@@ -723,310 +866,6 @@ blockquote.req {
   .guide-body { font-size: 16.5px; line-height: 1.65; }
   .guide-body h2 { font-size: 1.6rem; }
   .guide-body h3 { font-size: 1.18rem; }
-}
-
-/* ------------------------------------------------------------ glass and neon cards */
-/* The Features page's "everywhere in the app" cards: a dark band, each card
-   tinted in its own colour, with a neon line drawing and a pane of glass
-   holding the app's own words. Drawn in the page, no screenshots. */
-.neon-band { background: var(--stage-bg); color: var(--stage-fg); border: 0; }
-.neon-band .eyebrow { color: #2cc4a6; }
-.neon-band h2 { color: var(--stage-fg); }
-.neon-band h2 .mute { color: var(--stage-fg-2); }
-.nc-grid { display: grid; gap: 20px; }
-@media (min-width: 680px) { .nc-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1040px) { .nc-grid { grid-template-columns: repeat(3, 1fr); } }
-.nc {
-  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column;
-  min-height: 430px; border-radius: 26px; color: var(--stage-fg);
-  background: radial-gradient(130% 90% at 15% 0%, var(--a), var(--b) 70%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.35);
-  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.25s;
-}
-.nc:hover { text-decoration: none; transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.14); }
-.nc::after {   /* the glow behind the drawing */
-  content: ""; position: absolute; z-index: -1; left: 10%; right: 10%; bottom: 4%; height: 55%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 38%, transparent), transparent);
-  filter: blur(26px); opacity: 0.8; transition: opacity 0.25s;
-}
-.nc:hover::after { opacity: 1; }
-.nc-head { display: flex; align-items: center; gap: 14px; padding: 26px 26px 0; }
-.nc-tile {
-  flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px;
-  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 18px rgba(0, 0, 0, 0.45);
-  color: var(--c1);
-}
-.nc-tile svg { width: 24px; height: 24px; fill: currentColor; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c1) 70%, transparent)); }
-.nc h3 { margin: 0; flex: 1; font-size: 1.2rem; font-weight: 500; letter-spacing: -0.015em; color: #fff; }
-.nc-go {
-  flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.75);
-}
-.nc-go svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.nc p { margin: 0; padding: 18px 26px 0; font-size: 16px; line-height: 1.55; color: rgba(238, 244, 242, 0.84); }
-.nc-art { position: relative; flex: 1; min-height: 210px; margin-top: 8px; }
-.nc-art .neon {
-  position: absolute; left: 6%; top: 4%; width: 62%; height: auto; overflow: visible;
-  fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round;
-  filter: drop-shadow(0 0 3px var(--c1)) drop-shadow(0 0 12px color-mix(in srgb, var(--c1) 60%, transparent));
-}
-.nc-glass {
-  position: absolute; left: 34%; right: -1px; bottom: -1px; padding: 16px 18px 18px;
-  border-radius: 16px 0 0 0; font-size: 15px; color: rgba(255, 255, 255, 0.92);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.14); border-right: 0; border-bottom: 0;
-  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), -10px -10px 30px rgba(0, 0, 0, 0.25);
-}
-.gl-row { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gl-row b { font-weight: 600; color: #fff; }
-.gl-row span { margin-left: auto; padding-left: 10px; color: rgba(255, 255, 255, 0.55); font: 500 12px var(--font-mono); }
-.gl-strong { color: #fff; font-weight: 600; }
-.gl-big { font: 600 1.45rem/1.2 var(--font-display); letter-spacing: -0.02em; color: #fff; margin-bottom: 6px; }
-.gl-mono { font: 500 13px/1.6 var(--font-mono); color: rgba(255, 255, 255, 0.6); }
-.gl-mono.gl-strong { font-size: 15px; color: #fff; }
-.gl-pill {
-  display: inline-block; margin-top: 8px; padding: 6px 14px; border-radius: 980px; font-weight: 600;
-  color: #170a14; background: var(--c1); box-shadow: 0 0 16px color-mix(in srgb, var(--c1) 55%, transparent);
-}
-.gl-field {
-  display: flex; align-items: center; gap: 2px; margin-bottom: 6px; padding: 7px 10px; border-radius: 9px;
-  background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.16); color: #fff;
-}
-.gl-field i { width: 2px; height: 16px; background: var(--c1); animation: caret 1s steps(1) infinite; }
-@keyframes caret { 50% { opacity: 0; } }
-.gl-grid { display: grid; grid-template-columns: repeat(3, 1fr); font-size: 14px; }
-.gl-grid span { padding: 6px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-.gl-grid span:nth-child(-n+3) { font: 500 11px var(--font-mono); text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
-.gl-grid .on { outline: 2px solid var(--c1); outline-offset: -2px; border-radius: 4px; box-shadow: 0 0 14px color-mix(in srgb, var(--c1) 45%, transparent); }
-.gl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.gl-chips span {
-  padding: 4px 8px; border-radius: 7px; font: 600 11px var(--font-mono); color: #fff;
-  background: color-mix(in srgb, var(--c1) 30%, transparent); border: 1px solid color-mix(in srgb, var(--c1) 50%, transparent);
-}
-.gl-menu { display: flex; gap: 12px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); font-size: 14px; }
-.gl-menu span { color: rgba(255, 255, 255, 0.7); }
-@media (max-width: 680px) { .nc { min-height: 400px; } .nc-glass { left: 26%; } }
-/* Eight database cards: the last fills the row's two places on a wide screen. */
-@media (min-width: 1040px) { .nc-wide { grid-column: span 2; } .nc-wide .nc-glass { left: 52%; } .nc-wide .nc-art .neon { width: 34%; left: 10%; } }
-
-/* ------------------------------------------------------------ the stage and the cards by day */
-/* On a light page every band, the feature stage and the glass cards are
-   white too: the stage's window and dock become pale glass, and each card
-   keeps its colour as a soft wash, its drawing a little deeper so it holds
-   on white, and its pane of glass frosted white with dark words. */
-@media (prefers-color-scheme: light) {
-  .band { background: var(--bg); }  /* by day every section is white, parted by a hairline */
-  .stage { background: var(--bg); color: var(--fg); }
-  .stage::before { background: radial-gradient(closest-side, rgba(44, 196, 166, 0.22), rgba(44, 196, 166, 0.06) 55%, transparent); }
-  .stage .eyebrow, .neon-band .eyebrow { color: var(--accent-ink); }
-  .stage h2, .neon-band h2 { color: var(--fg); }
-  .stage h2 .mute, .neon-band h2 .mute { color: var(--fg-2); }
-  .stage-window { background: #fff; border-color: var(--line); box-shadow: 0 0 0 1px rgba(16, 52, 46, 0.04), 0 30px 80px rgba(10, 40, 35, 0.16); }
-  .stage-window .window-bar { background: #f4f7f6; border-bottom-color: var(--line); color: var(--fg-3); }
-  .stage-screen { background: #f4f7f6; }
-  .dock button {
-    color: var(--fg-2);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
-    border-color: rgba(16, 52, 46, 0.10);
-    box-shadow: inset 0 1px 0 #fff, 0 6px 18px rgba(10, 40, 35, 0.10);
-  }
-  .dock button:hover { color: var(--fg); }
-  .dock button[aria-selected="true"] {
-    color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-    background: linear-gradient(180deg, rgba(62, 208, 178, 0.22), rgba(62, 208, 178, 0.08));
-    box-shadow: inset 0 1px 0 #fff, 0 10px 28px rgba(15, 143, 124, 0.22);
-  }
-  .dock-tip { color: var(--fg); background: rgba(255, 255, 255, 0.96); border-color: var(--line); box-shadow: 0 6px 16px rgba(10, 40, 35, 0.12); }
-  .stage-caption { color: var(--fg-2); }
-  .stage-caption b { color: var(--fg); }
-
-  .neon-band { background: var(--bg); color: var(--fg); }
-  .nc {
-    color: var(--fg);
-    background: radial-gradient(130% 90% at 15% 0%, color-mix(in srgb, var(--c1) 18%, #fff), #fff 72%);
-    border-color: rgba(16, 52, 46, 0.08);
-    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(10, 40, 35, 0.05), 0 18px 44px rgba(10, 40, 35, 0.09);
-  }
-  .nc:hover { border-color: color-mix(in srgb, var(--c1) 45%, transparent); }
-  .nc::after { background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 30%, transparent), transparent); opacity: 0.7; }
-  .nc-tile {
-    background: rgba(255, 255, 255, 0.8); border-color: rgba(16, 52, 46, 0.08);
-    box-shadow: inset 0 1px 0 #fff, 0 6px 16px rgba(10, 40, 35, 0.08);
-    color: color-mix(in srgb, var(--c1) 70%, #0b2a26);
-  }
-  .nc-tile svg { filter: none; }
-  .nc h3 { color: var(--fg); }
-  .nc-go { background: rgba(16, 52, 46, 0.05); color: var(--fg-2); }
-  .nc p { color: var(--fg-2); }
-  .nc-art .neon {
-    filter: brightness(0.82) saturate(1.25) drop-shadow(0 0 5px color-mix(in srgb, var(--c1) 45%, transparent));
-  }
-  .nc-glass {
-    color: var(--fg);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5));
-    border-color: rgba(255, 255, 255, 0.9);
-    box-shadow: inset 0 1px 0 #fff, -10px -10px 30px color-mix(in srgb, var(--c1) 14%, transparent), 0 0 0 1px rgba(16, 52, 46, 0.05);
-  }
-  .gl-row b, .gl-strong, .gl-big, .gl-mono.gl-strong, .gl-field { color: var(--fg); }
-  .gl-row span, .gl-mono, .gl-grid span:nth-child(-n+3), .gl-menu span { color: var(--fg-3); }
-  .gl-pill { color: #fff; background: color-mix(in srgb, var(--c1) 75%, #0b2a26); box-shadow: 0 6px 16px color-mix(in srgb, var(--c1) 35%, transparent); }
-  .gl-field { background: rgba(255, 255, 255, 0.7); border-color: rgba(16, 52, 46, 0.12); }
-  .gl-grid span { border-bottom-color: rgba(16, 52, 46, 0.08); }
-  .gl-chips span { color: color-mix(in srgb, var(--c1) 60%, #0b2a26); background: color-mix(in srgb, var(--c1) 16%, transparent); }
-  .gl-menu { border-bottom-color: rgba(16, 52, 46, 0.1); }
-}
-
-/* ------------------------------------------------------------ the opening */
-/* A band the height of the screen. Behind the headline a double helix of
-   frosted glass: two backbones, thick where they come towards you and thin
-   where they turn away, the near one passing over the far one, with paler
-   glass base pairs between. Soft teal and blue light drifts behind it. Light
-   on a light page, dark on a dark one; the product shot rises out of its
-   lower edge. The pictures of one turn (site/assets/helix/) are drawn by
-   scripts/hero-helix.py: 1400px a turn, 560px high, with 100px of room
-   above and below. */
-.hero-glass {
-  --hg-bg: #ffffff; --hg-veil: rgba(255, 255, 255, 0.82);
-  --hg-shadow: 0.13; --hg-line: 0.11; --hg-core: 0.55; --hg-glass: 0.7; --hg-rungs: 0.2;
-  --hg-hide: 0.5; --hg-core-near: 0.45; --hg-tint: 0.35; --hg-edge: 1; --hg-light: 0.6;
-  --hg-hide-pic: url("assets/helix/front.svg?v=fe19a43789");
-  --hg-c1: #5fe0c6; --hg-c2: #8cc4ff; --hg-c3: #b5f5e6;
-  --hg-scale: 1;
-  position: relative; isolation: isolate; overflow: hidden; text-align: center;
-  min-height: min(100svh, 980px); display: grid; align-items: center;
-  margin-top: -76px; padding: 150px 0 170px;  /* under the floating header */
-  background: var(--hg-bg); color: var(--fg);
-}
-@media (prefers-color-scheme: dark) {
-  .hero-glass {
-    --hg-bg: #050908; --hg-veil: rgba(5, 9, 8, 0.62);
-    --hg-shadow: 0.7; --hg-line: 0; --hg-core: 1; --hg-glass: 0.075; --hg-rungs: 0.04;
-    --hg-hide: 0.42; --hg-core-near: 0.9; --hg-tint: 0.25; --hg-edge: 0.5; --hg-light: 0.85;
-    --hg-hide-pic: url("assets/helix/front-veil.svg?v=55b913571c");
-    --hg-c1: #0f8f7c; --hg-c2: #1d5fb0; --hg-c3: #2cc4a6;
-  }
-}
-.hero-glass .hero-inner { position: relative; z-index: 2; }
-.hero-glass h1 { margin-inline: auto; max-width: 13em; }
-.hero-glass .grad { background: linear-gradient(100deg, #0f8f7c, #2c7fd6); -webkit-background-clip: text; background-clip: text; }
-.hero-glass .lede { margin-inline: auto; }
-.hero-glass .cta { justify-content: center; }
-.hero-glass .btn:not(.btn-primary) {
-  background: color-mix(in srgb, var(--card) 55%, transparent); border: 1px solid var(--line);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-}
-.hero-glass .chips { justify-content: center; margin-inline: auto; }
-.hero-glass .chips li { background: color-mix(in srgb, var(--card) 55%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-@media (prefers-color-scheme: dark) {
-  .hero-glass h1 { color: #fff; }
-  .hero-glass .grad { background-image: linear-gradient(100deg, #2cc4a6, #b5f5e6); }
-}
-.hg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-/* The light the glass bends. */
-.hg-light i {
-  position: absolute; width: 46vw; aspect-ratio: 1; border-radius: 50%; opacity: var(--hg-light);
-  background: radial-gradient(closest-side, var(--c), transparent);
-  animation: hg-drift var(--t, 20s) ease-in-out var(--d, 0s) infinite alternate;
-}
-.hg-light i:nth-child(1) { --c: var(--hg-c1); left: 2%; top: 20%; --t: 19s; }
-.hg-light i:nth-child(2) { --c: var(--hg-c2); left: 34%; top: 34%; --t: 23s; --d: -8s; }
-.hg-light i:nth-child(3) { --c: var(--hg-c3); left: 60%; top: 8%; --t: 17s; --d: -4s; }
-.hg-light i:nth-child(4) { --c: var(--hg-c2); left: 72%; top: 46%; --t: 25s; --d: -12s; }
-@keyframes hg-drift { from { transform: translate(-5vw, -3vh); } to { transform: translate(5vw, 4vh); } }
-/* The helix, three turns wide and tilted, slides left by one turn on a loop,
-   which looks just like it turning. Back to front: a shadow, the coloured
-   cores, the far glass (the whole of both backbones) and its teal or blue
-   tint, the paler glass of the base pairs, then where a backbone comes
-   round in front a veil the colour of the page that hides what is behind
-   it, its core, its glass and its tint.
-   Each layer is a plain picture that only slides: Safari draws frosted
-   glass, masks and blurs on a long moving layer with gaps and straight
-   edges, so the pictures carry the glass and blurs themselves. */
-.hg-band {
-  position: absolute; left: 50%; top: 52%; width: 4200px; height: 560px;
-  transform: translate(-50%, -50%) rotate(-21deg) scale(var(--hg-scale));
-}
-.hg-move { position: absolute; inset: 0 -1400px 0 0; animation: hg-turn 52s linear infinite; }
-@keyframes hg-turn { to { transform: translateX(-1400px); } }
-.hg-move > * { position: absolute; inset: -100px 0; background-repeat: repeat-x; background-size: 1400px 760px; }
-.hg-shadow { background-image: url("assets/helix/shadow.svg?v=821a873a7e"); opacity: var(--hg-shadow); }
-.hg-line { background-image: url("assets/helix/line.svg?v=caeddea730"); opacity: var(--hg-line); }
-.hg-core { background-image: url("assets/helix/core-back.svg?v=63dd7b9e79"); opacity: var(--hg-core); }
-.hg-back { background-image: url("assets/helix/back.svg?v=fe61189683"); opacity: var(--hg-glass); }
-.hg-tint { background-image: url("assets/helix/tint-back.svg?v=d4e38a26ea"); opacity: var(--hg-tint); }
-.hg-back-edge { background-image: url("assets/helix/back-edge.svg?v=d7fcc9fcc2"); opacity: var(--hg-edge); }
-.hg-rungs { background-image: url("assets/helix/rungs.svg?v=ca1bb0a97a"); opacity: var(--hg-rungs); }
-.hg-rungs-edge { background-image: url("assets/helix/rungs-edge.svg?v=e7f0560f51"); opacity: calc(var(--hg-edge) * 0.8); }
-.hg-hide { background-image: var(--hg-hide-pic); opacity: var(--hg-hide); }
-.hg-core-near { background-image: url("assets/helix/core-front.svg?v=d688b53d23"); opacity: var(--hg-core-near); }
-.hg-front { background-image: url("assets/helix/front.svg?v=fe19a43789"); opacity: var(--hg-glass); }
-.hg-tint-near { background-image: url("assets/helix/tint-front.svg?v=ce2406598f"); opacity: var(--hg-tint); }
-.hg-front-edge { background-image: url("assets/helix/front-edge.svg?v=e3e5adb165"); opacity: var(--hg-edge); }
-/* Quiet behind the words, and into the page at the foot. */
-.hero-glass::after {
-  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(52% 40% at 50% 42%, var(--hg-veil), transparent 100%),
-              linear-gradient(180deg, transparent 70%, var(--bg));
-}
-.hero-show { position: relative; z-index: 3; margin-top: -150px; padding-bottom: 8px; }
-.hero-show .hero-stage { margin-top: 0; }
-.hero-show .hero-stage::before { display: none; }
-.hero-show .caption { margin-bottom: 0; }
-
-/* The User guide link: a step above the other links, a step below Download. */
-.nav-links .nav-guide { color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); font-weight: 600; }
-.nav-links .nav-guide:hover, .nav-links .nav-guide[aria-current="page"] { background: var(--accent-soft); color: var(--accent-ink); }
-.nav.on-dark .nav-links .nav-guide { color: #7ff0d8; border-color: rgba(127, 240, 216, 0.45); }
-.nav.on-dark .nav-links .nav-guide:hover, .nav.on-dark .nav-links .nav-guide[aria-current="page"] { background: rgba(127, 240, 216, 0.12); color: #b5f5e6; }
-
-/* Scrolling: where the browser can't drive animation from scrolling, the
-   page script brings sections in as they appear (html.js marks it running,
-   so without it nothing is ever hidden). */
-@supports not (animation-timeline: view()) {
-  html.js .rise { opacity: 0; transform: translateY(16px); transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
-  html.js .rise.in { opacity: 1; transform: none; }
-}
-/* Each card's neon draws itself in, and its glass slides up, as it appears. */
-.neon-draw .neon * { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s cubic-bezier(0.4, 0, 0.2, 1) 0.15s; }
-.neon-draw.drawn .neon * { stroke-dashoffset: 0; }
-.neon-draw .nc-glass { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease 0.5s, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.5s; }
-.neon-draw.drawn .nc-glass { opacity: 1; transform: none; }
-.nc:hover .neon { animation: flicker 2.4s linear infinite; }
-@keyframes flicker { 0%, 100% { opacity: 1; } 47% { opacity: 1; } 48% { opacity: 0.75; } 49% { opacity: 1; } 72% { opacity: 0.9; } }
-
-/* A card with a clip: a play button, and the clip in a window when opened. */
-.nc[data-clip] .nc-go svg { fill: currentColor; stroke: none; width: 14px; height: 14px; margin-left: 2px; }
-.clip-dialog {
-  width: min(1040px, calc(100vw - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 0; border-radius: 18px;
-  background: #0d1312; color: #eef4f2; box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6); overflow: hidden;
-}
-.clip-dialog::backdrop { background: rgba(3, 6, 5, 0.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-.clip-dialog[open] { animation: clip-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1); }
-@keyframes clip-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
-.clip-dialog .window-bar { background: #161d1c; border-bottom: 1px solid rgba(255, 255, 255, 0.08); color: #9aa9a6; height: 38px; }
-.clip-dialog .clip-close {
-  margin-left: auto; width: 28px; height: 28px; border-radius: 8px; border: 0; cursor: pointer;
-  background: rgba(255, 255, 255, 0.08); color: #eef4f2; font-size: 18px; line-height: 1;
-}
-.clip-dialog .window-bar span { margin-right: 0; }
-.clip-dialog video { display: block; width: 100%; aspect-ratio: 1280 / 786; background: #0e1312; }
-.clip-dialog .clip-text { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; padding: 18px 22px 20px; }
-.clip-dialog .clip-text p { margin: 0; flex: 1 1 320px; color: rgba(238, 244, 242, 0.8); font-size: 16px; }
-.clip-dialog .clip-text b { color: #fff; }
-.clip-dialog .clip-text a { color: #5fe0c6; font-weight: 600; white-space: nowrap; }
-
-@media (prefers-reduced-motion: reduce) {
-  .hg-move, .hg-light i { animation: none !important; }
-  .neon-draw .neon * { stroke-dashoffset: 0 !important; }
-  .neon-draw .nc-glass { opacity: 1 !important; transform: none !important; }
-}
-@media (max-width: 640px) {
-  .hero-glass { padding: 130px 0 150px; min-height: auto; --hg-scale: 0.62; }
-  .hero-glass::after { background: radial-gradient(100% 44% at 50% 46%, var(--hg-veil), transparent 100%), linear-gradient(180deg, transparent 75%, var(--bg)); }
-  .hero-show { margin-top: -110px; }
 }
 
 /* ------------------------------------------------------------ docs: shared parts */
@@ -1082,7 +921,7 @@ kbd {
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); }
 .pager a { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--fg); background: var(--card); }
 .pager a:hover { text-decoration: none; border-color: var(--accent); }
-.pager small { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); }
+.pager small { font: 500 12.5px var(--font-body); color: var(--fg-3); }
 .pager .next { text-align: right; grid-column: 2; }
 .helpful { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; font-size: 14.5px; color: var(--fg-2); }
 .helpful button { font: 600 13px var(--font-body); padding: 5px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg-2); cursor: pointer; }
@@ -1095,7 +934,7 @@ kbd {
 @media (min-width: 980px) { .docs { grid-template-columns: 240px minmax(0, 1fr); gap: 48px; } }
 @media (min-width: 1240px) { .docs { grid-template-columns: 240px minmax(0, 1fr) 200px; max-width: 1320px; } }
 .docs-nav { font-size: 14.5px; }
-@media (min-width: 980px) { .docs-nav { position: sticky; top: 92px; align-self: start; max-height: calc(100vh - 110px); overflow: auto; padding-right: 6px; } }
+@media (min-width: 980px) { .docs-nav { position: sticky; top: 80px; align-self: start; max-height: calc(100vh - 98px); overflow: auto; padding-right: 6px; } }
 .docs-search {
   display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 16px; padding: 9px 10px; cursor: pointer;
   border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg-3); font: 14px var(--font-body);
@@ -1117,7 +956,7 @@ kbd {
 /* A rule between the groups, so "Everyday skills" reads as the start of a
    section rather than one more line in a long list. */
 .docs-group + .docs-group { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
-.docs-group > span { display: block; margin: 0 0 8px; padding-left: 10px; font: 600 11.5px/1.4 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); }
+.docs-group > span { display: block; margin: 0 0 6px; padding-left: 10px; font: 600 13px/1.4 var(--font-display); color: var(--fg); }
 .docs-group a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--fg-2); line-height: 1.35; }
 .docs-group a:hover { text-decoration: none; background: var(--accent-soft); color: var(--fg); }
 .docs-group a[aria-current="page"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
@@ -1140,8 +979,8 @@ kbd {
 .trouble { margin-top: 2.4em; padding-top: 0.2em; border-top: 1px solid var(--line); }
 .trouble h3 { font-size: 1.06rem; margin-top: 1.3em; }
 .docs-rail { display: none; font-size: 13.5px; }
-@media (min-width: 1240px) { .docs-rail { display: block; position: sticky; top: 92px; align-self: start; max-height: calc(100vh - 110px); overflow: auto; } }
-.docs-rail p { margin: 0 0 8px; font: 500 11.5px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+@media (min-width: 1240px) { .docs-rail { display: block; position: sticky; top: 80px; align-self: start; max-height: calc(100vh - 98px); overflow: auto; } }
+.docs-rail p { margin: 0 0 8px; font: 600 13px/1.4 var(--font-display); color: var(--fg); }
 .docs-rail ol { list-style: none; margin: 0; padding: 0; border-left: 1.5px solid var(--line); }
 .docs-rail a { display: block; padding: 4px 0 4px 12px; margin-left: -1.5px; border-left: 1.5px solid transparent; color: var(--fg-3); line-height: 1.35; }
 .docs-rail .lvl3 a { padding-left: 22px; }
@@ -1192,27 +1031,31 @@ kbd {
 .search-dialog .pagefind-ui__result-title { font-weight: 600; }
 
 /* ------------------------------------------------------------ the AI assistants card */
-/* The whole row. Three small panes of matte glass, joined by thin arrows:
-   what you said (a message, with the photo of your notebook), one proposal,
-   and your records. Each pane is frosted, with a fine grain, a lit top
-   edge and a darker bottom one, over a few coloured shapes that show
-   sharp where they stick out and soft through the glass. A dot walks the
-   path; Approve lights as it passes and the new record takes the change.
-   Under it the clip plays by itself while it is on screen (site.js). */
-.nc-full { min-height: 0; }
-@media (min-width: 680px) { .nc-full { grid-column: 1 / -1; } }
-/* words beside the drawing only where both fit; above it on a tablet */
-@media (min-width: 1150px) {
-  .nc-full { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); align-items: center; }
+/* On the Features page, a panel of its own: the words, then the path a
+   change takes. Three small panes of glass, joined by thin arrows: what you
+   said (a message, with the photo of your notebook), one proposal, and your
+   records. A dot walks the path; Approve lights as it passes and the new
+   record takes the change. Under it the clip plays by itself while it is on
+   screen (site.js). */
+.ai-card {
+  --c1: #7aa7ff; --c2: #b79cff; --b: var(--card);
+  display: grid; gap: 24px 48px; margin-bottom: clamp(40px, 5vw, 64px); padding: clamp(20px, 3vw, 36px);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-frame); background: var(--card);
 }
-@media (min-width: 770px) and (max-width: 1149px) { .nc-full .flow { justify-content: center; padding: 6px 26px 30px; } }
-.nc-full .nc-copy { padding-bottom: 22px; }
+@media (min-width: 1080px) {
+  .ai-card { grid-template-columns: 330px minmax(0, 1fr); }
+  .ai-copy { grid-row: span 2; }
+}
+.ai-copy h3 { display: flex; align-items: center; gap: 11px; font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 14px; }
+.ai-copy p { font-size: 16.5px; }
+.ai-clip { margin: 0; }
+.ai-clip .window { box-shadow: var(--shadow); }
 .ai-card {
   --ln: rgba(225, 233, 245, 0.3); --ink: rgba(238, 243, 252, 0.94); --mute: rgba(225, 233, 245, 0.55);
   --glass: linear-gradient(165deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03) 55%, rgba(255, 255, 255, 0.06));
   --rim: rgba(255, 255, 255, 0.06);
 }
-.flow { display: flex; align-items: center; padding: 30px 34px 30px 4px; }
+.flow { display: flex; align-items: center; justify-content: center; padding: 4px 0 8px; }
 .fl-node { position: relative; flex: none; display: grid; justify-items: center; gap: 12px; }
 .fl-n { font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; color: var(--mute); }
 .fl-tag { font: 500 11px/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
@@ -1282,13 +1125,10 @@ kbd {
 }
 .fl-gate svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .fl-gate + .fl-tag { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); }
-.ai-clip { margin: 0; padding: 0 26px 26px; cursor: default; }
-.ai-clip .window { border-radius: 14px; }
 .ai-clip video { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; background: #0e1312; pointer-events: none; }
-@media (min-width: 680px) { .ai-clip { grid-column: 1 / -1; } }
 /* On a phone the path runs down the card. */
 @media (max-width: 769px) {
-  .flow { flex-direction: column; padding: 10px 26px 26px; }
+  .flow { flex-direction: column; padding: 4px 0 8px; }
   .fl-node { gap: 10px; }
   .fl-box, .fl-prop .fl-box { width: 190px; }
   .fl-link, .fl-link.l2 { width: 1px; min-width: 0; height: 34px; flex: none; margin: 10px 0; }

@@ -102,11 +102,11 @@ PAGES = [
 
 T = {
     "en": dict(lang="en", nav_label="Site", features="Features", server="Run it for your lab", guide="User guide",
-               download="Download", other="中文", other_code="zh-CN", other_data="zh", search="Search the guide",
+               download="Download", github="BioManager on GitHub", other="中文", other_code="zh-CN", other_data="zh", search="Search the guide",
                contents="Contents", on_page="On this page", prev="Previous", next="Next", helpful="Was this page helpful?",
                yes="Yes", no="No", minutes="{n} min read", suffix="BioManager user guide"),
     "zh": dict(lang="zh-CN", nav_label="页面导航", features="功能", server="为实验室部署", guide="用户指南",
-               download="下载", other="English", other_code="en", other_data="en", search="搜索用户指南",
+               download="下载", github="BioManager 的 GitHub 仓库", other="English", other_code="en", other_data="en", search="搜索用户指南",
                contents="目录", on_page="本页内容", prev="上一页", next="下一页", helpful="这一页对你有帮助吗？",
                yes="有", no="没有", minutes="阅读约 {n} 分钟", suffix="BioManager 用户指南"),
 }
@@ -194,21 +194,30 @@ def head(lang, slug, summary):
 </head>"""
 
 
+def home(slug: str) -> str:
+    """From this page to its language's own pages (features.html, download.html …)."""
+    return "" if slug == "index" else "../"
+
+
+REPO = "https://github.com/gaspolymerase/biomanager"
+
+
 def header(lang, slug):
     t = T[lang]
-    u = up(lang, slug)
+    u, h = up(lang, slug), home(slug)
     other = (("zh/" if slug == "index" else "../zh/guide/") if lang == "en" else ("../" if slug == "index" else "../../guide/"))
     other += "guide.html" if slug == "index" else f"{slug}.html"
     return f"""<header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="{u or './'}"><img src="{u}assets/icon.svg" alt="" width="28" height="28">BioManager</a>
+    <a class="brand" href="{h or './'}"><img src="{u}assets/icon.svg" alt="" width="28" height="28">BioManager</a>
     <nav class="nav-links" aria-label="{t['nav_label']}">
-      <a href="{u}features.html">{t['features']}</a>
-      <a href="{u}server.html">{t['server']}</a>
-      <a class="nav-guide" href="{u}guide.html" aria-current="page">{t['guide']}</a>
+      <a href="{h}features.html">{t['features']}</a>
+      <a href="{h}server.html">{t['server']}</a>
+      <a href="{h}guide.html" aria-current="page">{t['guide']}</a>
     </nav>
+    <a class="nav-gh" href="{REPO}" aria-label="{t['github']}"><svg aria-hidden="true"><use href="{u}assets/icons.svg#github"/></svg><span>GitHub</span></a>
     <a class="lang-link" href="{other}" hreflang="{t['other_code']}" lang="{t['other_code']}" data-lang="{t['other_data']}">{t['other']}</a>
-    <a class="btn btn-small btn-primary" href="{u}download.html">{t['download']}</a>
+    <a class="btn btn-small btn-primary" href="{h}download.html">{t['download']}</a>
   </div>
 </header>"""
 
@@ -283,32 +292,88 @@ def pager(lang, slug):
       </div>"""
 
 
+FOOT = {
+    "en": dict(
+        invite=("BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs "
+                "find it; an issue there tells us what to fix or build next."),
+        star="Star on GitHub", feedback="Send feedback", label="Site map",
+        product="Product", learn="Learn", project="Project",
+        features="Features", download="Download", server="Run it for your lab", releases="All releases",
+        guide="User guide", try_it="Try it first", excel="Coming from Excel", trouble="Troubleshooting",
+        source="Source on GitHub", licence="MIT licence", privacy="Privacy", terms="Terms",
+        legal=('Released under the <a href="{repo}/blob/master/LICENSE">MIT licence</a>. Icons from '
+               '<a href="https://lucide.dev">Lucide</a> (ISC licence), with the lab\'s own drawn for BioManager. Text in '
+               '<a href="https://vercel.com/font">Geist</a> (SIL Open Font Licence). '
+               'The people and records in the screenshots and clips are made up.')),
+    "zh": dict(
+        invite=("BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；"
+                "遇到问题或有想法，也欢迎在 GitHub 上提给我们。"),
+        star="在 GitHub 上标星", feedback="提交反馈", label="网站地图",
+        product="产品", learn="上手", project="项目",
+        features="功能", download="下载", server="为实验室部署", releases="所有版本",
+        guide="用户指南", try_it="先试一遍", excel="从 Excel 过来", trouble="常见问题排查",
+        source="GitHub 源代码", licence="MIT 许可证", privacy="隐私", terms="使用条款",
+        legal=('以 <a href="{repo}/blob/master/LICENSE">MIT 许可证</a>发布。图标来自 '
+               '<a href="https://lucide.dev">Lucide</a>（ISC 许可证），实验室用的图标为 BioManager 自绘。文字字体为 '
+               '<a href="https://vercel.com/font">Geist</a>（SIL 开源字体许可证）。'
+               '截图和视频中的人员和记录均为虚构。')),
+}
+
+
+def footer_html(lang: str, u: str, h: str) -> str:
+    """The foot of every page on the site, the hand-written ones too (they
+    carry a copy of it): `u` leads to the site's root folder, `h` to this
+    language's own pages."""
+    f = FOOT[lang]
+    return f"""<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-about">
+        <div class="brand"><img src="{u}assets/icon.svg" alt="" width="22" height="22">BioManager</div>
+        <p>{f['invite']}</p>
+        <div class="footer-btns">
+          <a class="btn btn-quiet" href="{REPO}"><svg class="star" width="16" height="16" aria-hidden="true"><use href="{u}assets/icons.svg#star"/></svg>{f['star']}</a>
+          <a class="btn btn-quiet" href="{REPO}/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="{u}assets/icons.svg#github"/></svg>{f['feedback']}</a>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="{f['label']}">
+        <div>
+          <p class="footer-h">{f['product']}</p>
+          <ul>
+            <li><a href="{h}features.html">{f['features']}</a></li>
+            <li><a href="{h}download.html">{f['download']}</a></li>
+            <li><a href="{h}server.html">{f['server']}</a></li>
+            <li><a href="{REPO}/releases">{f['releases']}</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">{f['learn']}</p>
+          <ul>
+            <li><a href="{h}guide.html">{f['guide']}</a></li>
+            <li><a href="{h}guide/try-it-first.html">{f['try_it']}</a></li>
+            <li><a href="{h}guide/coming-from-excel.html">{f['excel']}</a></li>
+            <li><a href="{h}guide/troubleshooting.html">{f['trouble']}</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-h">{f['project']}</p>
+          <ul>
+            <li><a href="{REPO}">{f['source']}</a></li>
+            <li><a href="{REPO}/blob/master/LICENSE">{f['licence']}</a></li>
+            <li><a href="{h}privacy.html">{f['privacy']}</a></li>
+            <li><a href="{h}terms.html">{f['terms']}</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <p class="footer-legal">{f['legal'].format(repo=REPO)}</p>
+  </div>
+</footer>"""
+
+
 def footer(lang, slug):
     u = up(lang, slug)
-    repo = "https://github.com/gaspolymerase/biomanager"
-    if lang == "en":
-        invite = ("BioManager is free and open source. If it helps your lab, a star on GitHub helps other labs "
-                  "find it; an issue there tells us what to fix or build next.")
-        star, feedback = "Star on GitHub", "Send feedback"
-        body = (f'<p><a href="{u}download.html">Download</a> · <a href="{repo}/releases">All releases and what changed</a>'
-                f' · <a href="{u}privacy.html">Privacy</a> · <a href="{u}terms.html">Terms</a></p>')
-    else:
-        invite = ("BioManager 免费开源。如果它帮到了你的实验室，欢迎在 GitHub 上点个星标，让更多实验室找到它；"
-                  "遇到问题或有想法，也欢迎在 GitHub 上提给我们。")
-        star, feedback = "在 GitHub 上标星", "提交反馈"
-        body = (f'<p><a href="{u}download.html">下载</a> · <a href="{repo}/releases">所有版本和更新内容</a>'
-                f' · <a href="{u}privacy.html">隐私</a> · <a href="{u}terms.html">使用条款</a></p>')
-    return f"""<footer class="footer">
-  <div class="wrap footer-inner">
-    <div class="footer-gh">
-      <p>{invite}</p>
-      <a class="btn btn-quiet" href="{repo}"><svg class="star" width="16" height="16" aria-hidden="true"><use href="{u}assets/icons.svg#star"/></svg>{star}</a>
-      <a class="btn btn-quiet" href="{repo}/issues/new/choose"><svg width="16" height="16" aria-hidden="true"><use href="{u}assets/icons.svg#github"/></svg>{feedback}</a>
-    </div>
-    <div class="brand"><img src="{u}assets/icon.svg" alt="" width="22" height="22">BioManager</div>
-    {body}
-  </div>
-</footer>
+    return f"""{footer_html(lang, u, home(slug))}
 <script src="{u}site.js"></script>"""
 
 
