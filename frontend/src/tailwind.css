@@ -5222,12 +5222,12 @@
   /* The databases row on the home page. */
   .home-dbs { @apply flex flex-wrap gap-2; }
   /* Home's cards, in each person's order (templates/home.html). */
-  /* Bento: two across, three on a wide window; a wide card takes the row,
-     and the grid fills the gaps a tall card leaves. */
-  .home-grid { @apply grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3; grid-auto-flow: row dense; }
+  /* Bento: the grid fills the gaps a tall card leaves. How many go across,
+     and a wide card taking the row, are in static/home-layouts.css, which
+     goes by the room the page has rather than the window's width. */
+  .home-grid { @apply grid gap-3; grid-auto-flow: row dense; }
   .home-card { @apply flex min-w-0 flex-col; }
   .home-card > .card { @apply h-full; }
-  .home-card.is-wide { @apply lg:col-span-2 2xl:col-span-3; }
 
   /* The daily brief: glass, above the views. */
   .home-brief {
@@ -5341,7 +5341,7 @@
   .home-req-open:hover { @apply bg-brand-600/20 no-underline; }
 
   /* Your databases: a tile each, its mark, name and count. */
-  .home-dbgrid { @apply grid gap-2; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .home-dbgrid { @apply grid gap-2; }  /* its columns: static/home-layouts.css */
   .home-dbtile {
     @apply flex min-w-0 items-center gap-2.5 rounded-[18px] bg-sand-300/25 p-2.5 text-ink no-underline transition-colors;
   }
@@ -5364,12 +5364,8 @@
   .home-page-row > span { @apply min-w-0 flex-1 truncate; }
   .home-page-row small { @apply shrink-0 text-[12px] text-muted; }
 
-  /* Home's title: the day as a small kicker above a large greeting. */
-  body:has(.home-bento) { --toolbar-h: 92px; }
-  body:has(.home-bento) .toolbar { @apply pt-1.5; }
-  body:has(.home-bento) .toolbar > .min-w-0 { @apply flex flex-col-reverse gap-1.5; }
-  body:has(.home-bento) .toolbar-title { @apply text-[28px] font-semibold tracking-[-0.03em]; }
-  body:has(.home-bento) .toolbar-sub { @apply mt-0 font-mono text-[12px] uppercase tracking-[0.05em]; }
+  /* Home's title (the day as a small kicker above a large greeting) is in
+     static/home-layouts.css, with the rest of what is Home's alone. */
   .home-calcs { @apply flex flex-wrap gap-1.5 px-4 py-3; }
   .home-cust-list { @apply flex flex-col gap-1; }
   .home-cust-row { @apply flex items-center gap-2 rounded-lg border border-hairline bg-surface px-2 py-1.5 text-[13px]; }

@@ -149,6 +149,27 @@ class CustomizeHomeTests(AppTestCase):
         self.post(who, "/home/cards", {"reset": "1"})
         self.assertIn("weanings", self.cards(self.get_ok(who, "/home")))
 
+    def test_customize_draws_home_as_a_map_with_the_cards_that_are_off_underneath(self):
+        who = client_for(make_user(uniq("mapper")))
+        self.save(who, ["calendar", "sac", "stats", "todos", "for_you"], show=["calendar", "sac"], wide=["calendar"])
+        html = self.get_ok(who, "/home")
+        keys = lambda part: re.findall(r'data-key="([a-z_:]+)"', part)  # noqa: E731
+        on = html[html.index("data-home-map-grid"):html.index("data-home-map-none")]
+        off = html[html.index("data-home-map-tray"):html.index("data-home-map-all")]
+        self.assertLess(keys(on).index("calendar"), keys(on).index("sac"))
+        self.assertIn('class="home-map-card is-wide" data-key="calendar"', on)
+        self.assertTrue({"stats", "todos"} <= set(keys(off)))
+        self.assertFalse({"stats", "todos"} & set(keys(on)))
+        # What sits in Overview's top is a switch there, not a card to drag.
+        self.assertFalse({"for_you", "welfare", "databases", "notebook"} & set(keys(on) + keys(off)))
+        switch = re.search(r'<input type="checkbox" class="set-switch" name="show" value="for_you"([^>]*)>', html)
+        self.assertNotIn("checked", switch.group(1))
+        # Every card is sent once, so saving the map as it stands changes nothing.
+        form = html[html.index('id="home-customize"'):]
+        sent = re.findall(r'name="order" value="([a-z_:]+)"', form)
+        self.assertEqual(len(sent), len(set(sent)))
+        self.assertIn("home-customize.js", html)
+
     def test_the_optional_cards_show_their_own_things(self):
         who_name = make_user(uniq("busy"))
         who = client_for(who_name)

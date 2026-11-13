@@ -990,9 +990,11 @@ database has a name of its own (one another database has is refused), so
       list), the colony in a number, <b>Needs a look</b>, <b>For you</b>,
       <b>Your databases</b> (a tile each, with its count) and the
       notebook's latest pages; the cards follow.
-      <b>Customize</b> chooses which cards Overview shows, in what order
-      and how wide, and which counts it shows, with to-dos, bookings and
-      calculators (the ones you opened last) to add.
+      The cards go two or three across as the window has room.
+      <b>Customize</b> opens a small map of Overview: drag the cards
+      into your order, make one wide, take one off or add one (to-dos,
+      bookings and the calculators you opened last start off), and
+      choose which counts it shows.
       <br><br><b>Animals that may need a look</b> says what the records
       show, never a diagnosis: a living mouse whose latest weight is 15%
       or more below its peak of the last 30 days, or below its first
