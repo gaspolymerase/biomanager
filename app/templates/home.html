@@ -22,6 +22,9 @@
   {% endif %}
 {% endblock %}
 
+{# Home has more to lay side by side than a form page, so it is wider. #}
+{% block page_shell_class %}shell-page home-page{% endblock %}
+
 {% block head_extra %}
   <link rel="stylesheet" href="{{ url_for('static', filename='home-layouts.css') }}?v={{ asset_version('home-layouts.css') }}">
 {% endblock %}
@@ -711,11 +714,15 @@
     </div>
   </div>
 
-  <section class="home-grid">
-    {% for key in home_cards.order if key in cards and key in shown_cards and key not in in_bento %}
-      <div class="home-card{% if key in home_cards.wide %} is-wide{% endif %}" data-home-card="{{ key }}">{{ cards[key] }}</div>
-    {% endfor %}
-  </section>
+  {# The cards, two or three across as the page has room (.home-cards is
+       what the grid measures: static/home-layouts.css). #}
+  <div class="home-cards">
+    <section class="home-grid">
+      {% for key in home_cards.order if key in cards and key in shown_cards and key not in in_bento %}
+        <div class="home-card{% if key in home_cards.wide %} is-wide{% endif %}" data-home-card="{{ key }}">{{ cards[key] }}</div>
+      {% endfor %}
+    </section>
+  </div>
 {% endif %}
 {% include "home/_customize.html" %}
 {% endblock %}

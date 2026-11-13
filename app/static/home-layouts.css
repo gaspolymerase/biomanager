@@ -1,8 +1,9 @@
-/* Home's views beyond the cards: Timeline (.trk) and By place (.frz),
-   templates/home/, and For you in one line above them. Overview uses the
-   ordinary card styles in tailwind.css. Both views are cards like any
-   other, in the app's type; colours come from its tokens, so they follow
-   light and dark mode. */
+/* Home (templates/home.html): how wide the page is and how Overview's cards
+   and panels sit in it, the Customize dialog's map (.home-map), and the
+   views beyond the cards: Timeline (.trk) and By place (.frz),
+   templates/home/, with For you in one line above them. The cards and
+   panels themselves are drawn by tailwind.css. Colours come from the app's
+   tokens, so everything here follows light and dark mode. */
 
 :root {
   --trk-overdue: var(--color-danger-600);
@@ -448,4 +449,225 @@ a.trk-lab:hover .trk-name { color: var(--color-brand-700); }
 @media (max-width: 960px) {
   .frz { grid-template-columns: minmax(0, 1fr); }
   .frz-pull { order: -1; }
+}
+
+/* ---- The page and Overview's cards -------------------------------------- */
+
+/* Home lays work side by side, so it takes more of a wide window than a
+   form page does; on a laptop its left edge meets the greeting above it. */
+.home-page { max-width: 1360px; padding-inline: 16px; }
+
+/* Home's title, in all three views: the day as a small kicker above a
+   large greeting. */
+body:has(.home-page) { --toolbar-h: 92px; }
+body:has(.home-page) .toolbar { padding-top: 6px; }
+body:has(.home-page) .toolbar > .min-w-0 { display: flex; flex-direction: column-reverse; gap: 6px; }
+body:has(.home-page) .toolbar-title { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; }
+body:has(.home-page) .toolbar-sub {
+  margin-top: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+/* On a phone the greeting is too long for one line beside the buttons:
+   it takes two lines rather than losing the name. */
+@media (max-width: 767px) {
+  body:has(.home-page) .toolbar-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 22px;
+    line-height: 1.15;
+    white-space: normal;
+    text-wrap: balance;
+  }
+}
+
+/* The cards go one, two or three across by the room the page gives them
+   (the sidebar opening or closing changes it, the window does not have to),
+   and a wide card takes the whole row. */
+.home-cards { container: home-cards / inline-size; }
+.home-grid { grid-template-columns: minmax(0, 1fr); }
+.home-card.is-wide { grid-column: 1 / -1; }
+@container home-cards (min-width: 640px) {
+  .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container home-cards (min-width: 1160px) {
+  .home-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Your databases: three tiles across where the panel has room, so it is no
+   taller than the panels beside it; two on a phone, with the name on two
+   lines rather than cut short. */
+.home-dbgrid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 164px), 1fr)); }
+@media (max-width: 480px) {
+  .home-dbgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-dbtile { gap: 8px; padding: 8px; }
+  .home-dbtile-mark { width: 28px; height: 28px; border-radius: 9px; }
+  .home-dbtile-text b {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: 1.25;
+  }
+}
+
+/* ---- Customize: the map of Home ----------------------------------------- */
+
+.home-map-dialog { width: min(720px, calc(100vw - 2rem)); }
+.home-map-dialog.is-arranging, .home-map-dialog.is-arranging * { cursor: grabbing !important; user-select: none; }
+.home-map-h { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--color-muted); }
+.home-map-page {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius-xl);
+  background: var(--color-recess);
+  box-shadow: inset 0 0 0 1px var(--color-hairline);
+}
+.home-map-top { display: flex; flex-direction: column; gap: 6px; }
+.home-map-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.home-map-fixed, .home-map-opt {
+  display: flex;
+  flex: 1 1 130px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.home-map-fixed.is-2 { flex: 2 1 266px; }
+.home-map-fixed { background: color-mix(in srgb, var(--color-ink) 5%, transparent); color: var(--color-muted); }
+.home-map-fixed > svg { flex: none; width: 12px; height: 12px; opacity: 0.7; }
+.home-map-opt {
+  flex: 1.5 1 170px;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.home-map-opt:has(.set-switch:not(:checked)) { background: transparent; border-style: dashed; color: var(--color-muted); }
+.home-map-opt .set-switch { flex: none; width: 38px; height: 22px; border-radius: 999px; }
+.home-map-name { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 0; }
+.home-map-name > svg { flex: none; width: 14px; height: 14px; color: var(--color-muted); }
+.home-map-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.home-map-grid, .home-map-tray {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.home-map-grid { grid-auto-flow: row dense; }
+.home-map-grid:empty, .home-map-tray:empty { display: none; }
+.home-map-grid .home-map-card.is-wide { grid-column: 1 / -1; }
+.home-map-card {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 6px 0 2px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+  color: var(--color-ink);
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.home-map-card .home-map-name { font-weight: 500; }
+.home-map-card.is-new { animation: home-map-new 0.9s ease-out; }
+@keyframes home-map-new {
+  from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-600) 45%, transparent); }
+  to { box-shadow: 0 0 0 3px transparent; }
+}
+/* The card in hand: the gap it will fill stays in the map, and a copy
+   follows the pointer. */
+.home-map-card.is-dragging {
+  border: 1.5px dashed var(--color-brand-600);
+  background: color-mix(in srgb, var(--color-brand-600) 8%, transparent);
+  box-shadow: none;
+}
+.home-map-card.is-dragging > * { visibility: hidden; }
+.home-map-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  margin: 0;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  list-style: none;
+}
+.home-map-grip, .home-map-wide {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--color-muted);
+}
+.home-map-grip { cursor: grab; touch-action: none; }
+.home-map-grip svg { width: 14px; height: 14px; }
+.home-map-wide { cursor: pointer; }
+.home-map-hide { color: var(--color-muted); }
+.home-map-wide:hover, .home-map-grip:hover { background: var(--color-sand-200); color: var(--color-ink); }
+:is(.home-map-grip, .home-map-wide, .home-map-add):focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 1px; }
+/* Wide's mark: half a row, or all of it. */
+.home-map-wide i {
+  width: 16px;
+  height: 11px;
+  border-radius: 3px;
+  background: linear-gradient(to right, currentColor 50%, transparent 50%);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+  opacity: 0.75;
+}
+.home-map-wide[aria-pressed="true"] { color: var(--color-brand-700); }
+.home-map-wide[aria-pressed="true"] i { background: currentColor; opacity: 1; }
+
+.home-map-tray .home-map-card { border-style: dashed; background: transparent; box-shadow: none; color: var(--color-ink-soft); }
+.home-map-tray :is(.home-map-wide, .home-map-hide), .home-map-grid .home-map-add { display: none; }
+.home-map-add {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-brand-600) 12%, transparent);
+  color: var(--color-brand-800);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.home-map-add:hover { background: color-mix(in srgb, var(--color-brand-600) 20%, transparent); }
+.home-map-add svg { width: 12px; height: 12px; }
+.home-map-none { margin: 0; padding: 6px 2px; font-size: 13px; color: var(--color-muted); }
+.home-map-none[hidden], .home-cust-tiles[hidden] { display: none; }
+.home-map-said { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* A phone's Home is one column: the map is a list, and of the top only the
+   two panels there is a choice about. */
+@media (max-width: 600px) {
+  .home-map-fixed { display: none; }
+  .home-map-grid, .home-map-tray { grid-template-columns: minmax(0, 1fr); }
+  .home-map-card { height: 44px; }
+  .home-map-grip, .home-map-wide { width: 34px; height: 36px; }
 }
