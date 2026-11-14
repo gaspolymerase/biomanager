@@ -938,6 +938,7 @@ class PlasmidTarget(Target):
         return {"people": _people(session), "taken": taken, "next": max(taken, default=0) + 1}
 
     def create(self, session, ctx, v, extras):
+        from . import custom_fields
         from . import plasmid_service as pbox
         from .models import PlasmidRecord
         warnings: list[str] = []
@@ -969,6 +970,8 @@ class PlasmidTarget(Target):
             else:
                 setattr(p, key, value[:limit])
         p.notes = _extras_note(v.get("notes", ""), extras)
+        # The lab's own columns, as the plasmid dialog saves them.
+        custom_fields.apply_form(p, v, custom_fields.fields(session, "plasmids"))
         session.add(p)
         session.flush()
         box_name = v.get("box", "").strip()
@@ -991,7 +994,7 @@ def plasmid_target(session) -> Target:
     return PlasmidTarget(
         key="plasmids", title=translate_value(lab.FEATURES["plasmids"].label), noun="plasmid", nouns="plasmids",
         back_url=url_for("plasmids"),
-        columns_note=gettext("The plasmid columns are fixed, so any others go into each plasmid's notes."),
+        columns_note=gettext("Columns your lab added to Plasmids are matched by their names; any others go into each plasmid's notes."),
         fields=[
             Field("plasmid_id", "Plasmid number", ("plasmid number", "plasmid id", "number", "id", "stock number",
                                                    "pl number", "p number", "质粒编号", "编号")),
@@ -1017,6 +1020,7 @@ def plasmid_target(session) -> Target:
             shared_field(),
             Field("notes", "Notes", ("note", "comment", "remark", "description", "source", "reference", "备注",
                                      "来源")),
+            *custom_import_fields(session, "plasmids"),
         ])
 
 

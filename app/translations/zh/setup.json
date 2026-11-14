@@ -203,7 +203,7 @@
   "Fish in %(db)s": "%(db)s中的鱼",
   "The zebrafish columns are fixed, so any others go into the fish's notes.": "斑马鱼的列是固定的，其他列会放进鱼的备注。",
   "It has no name.": "没有名称。",
-  "The plasmid columns are fixed, so any others go into each plasmid's notes.": "质粒的列是固定的，其他列会放进每个质粒的备注。",
+  "Columns your lab added to Plasmids are matched by their names; any others go into each plasmid's notes.": "实验室给质粒添加的列按列名匹配，其他列会放进每个质粒的备注。",
   "It has no genotype.": "没有基因型。",
   "“%(purpose)s” isn't one of this database's purposes, so it's %(default)s.": "“%(purpose)s”不是这个数据库的用途之一，因此设为%(default)s。",
   "There's no rack called “%(rack)s”, so it isn't placed.": "没有名为“%(rack)s”的架子，因此没有放置。",
