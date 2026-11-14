@@ -4718,10 +4718,19 @@ teal in them).
   width, the rest sit two across. A picture with `data-clip-open` opens that
   clip (from `site/assets/clips/`, made by `scripts/live-clips.py`) in a
   window with a link on to the guide; without scripts, or with ⌘-click, it
-  is just that link. What works the same in every database is a row each
-  (`article.detail`): its name, what it does, and a sample of it in the
-  app's own words (`.sample`, with the `.gl-*` parts), with a **Watch**
-  button where there is a clip (hidden until `site.js` runs).
+  is just that link. Each database keeps a colour of its own (`--c1`,
+  `--c2` in its `style`): its icon is lit in it and its picture glows in it
+  from behind, and the two that run the page's width have a neon line
+  drawing under their words (`.feat-art`, an inline SVG stroked with the
+  colours, glowing by `drop-shadow`).
+- **What works the same in every database** is a glowing card each
+  (`article.nc` in `.nc-grid`, three across on a wide screen): tinted in
+  its colour (a soft wash by day, `--a` to `--b` by night), its icon on a
+  lit tile, its name, what it does and its links (a **Watch** button where
+  there is a clip, hidden until `site.js` runs), then its neon drawing
+  (`.nc-art .neon`) with a pane of glass over the corner holding a sample
+  in the app's own words (`.nc-glass`, with the `.gl-*` parts). The AI
+  assistants card above them is tinted in its blue the same way.
 - **The AI assistants card** (`.ai-card`, first under "in every database"):
   the words on the left; on the right three small panes of glass (`.mg`),
   joined by thin arrows with Approve as a gate on the last: what you said (a
