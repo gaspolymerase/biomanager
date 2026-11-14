@@ -442,8 +442,8 @@ def calendar(d):
         if item.count() and item.is_visible():
             d.move(item, seconds)
             d.wait(0.7)
-    d.click("label:has-text('Mouse colony')", after=1.2)
-    d.click("label:has-text('Mouse colony')", after=1.0)
+    d.click("button.cal-fchip:has-text('Mouse colony')", after=1.2)
+    d.click("button.cal-fchip:has-text('Mouse colony')", after=1.0)
     d.click("#cal-new-more", after=0.6)
     d.click("button.menu-item[data-new=booking]", after=0.8)
     dialog = d.page.locator("dialog[open]").first

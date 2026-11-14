@@ -305,20 +305,27 @@ def new_database(d):
 
 def home(d):
     d.goto("/home")
+    # Overview, as Home opens: the row of views (Overview, Timeline, By place)
+    # and Customize are left out of the clip.
+    d.page.evaluate("document.querySelector('.page-tabs-row')?.remove()")
     d.start()
-    d.wait(1.0)
-    d.zoom(box=(240, 190, 1020, 110), scale=1.3)
-    d.move("text=WEANINGS", 1.0)
-    d.wait(1.2)
-    d.unzoom()
     d.wait(0.8)
+    d.zoom(".home-brief", scale=1.35)
+    d.move(".home-brief-text b", 1.0)
+    d.wait(1.6)
+    d.unzoom()
+    d.wait(0.6)
     d.cover()
-    d.scroll(420, at="text=Upcoming weanings")
-    d.wait(1.0)
-    d.scroll(-420)
-    d.click("button[name=layout]:has-text('Tracks')", after=1.8)
-    d.click("button[name=layout]:has-text('Freezer')", after=2.0)
-    d.click("button[name=layout]:has-text('Classic')", after=0.8)
+    d.move(".home-day.is-today", 0.8)
+    d.wait(0.6)
+    d.move(".home-today-row", 0.6)
+    d.wait(0.8)
+    d.scroll(560, at=".home-colony")
+    d.wait(1.2)
+    d.scroll(600)
+    d.wait(1.4)
+    d.scroll(-1160, seconds=1.2)
+    d.wait(0.6)
 
 
 CLIPS = {
