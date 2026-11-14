@@ -494,33 +494,29 @@ p { margin: 0 0 1em; color: var(--fg-2); }
 }
 
 /* ------------------------------------------------------------ the Features page */
-/* Each database: a picture of it in the app, which plays its clip when
-   opened, then what it does and where the guide covers it. The first two
-   run the page's width; the rest sit two across. */
-.feat-grid { display: grid; gap: 40px; }
-@media (min-width: 860px) { .feat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px 40px; } }
-.feat { display: flex; flex-direction: column; min-width: 0; }
-.feat-shot {
-  position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10;
-  border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--bg-band);
-  box-shadow: var(--shadow);
+/* Each database: its glowing card, and beside it its clip playing by itself
+   while on screen (a video[data-clip-src], which site.js replays), the two
+   swapping sides row by row. The card is tinted in the database's colour
+   (--c1, --c2, --a, --b on the row), which also glows behind the clip. On a
+   phone the clip comes under its card. A database with no clip shows a
+   picture of it in the same window. */
+.nc-rows { display: grid; gap: clamp(28px, 4.5vw, 64px); }
+.nc-row { display: grid; gap: 18px; }
+@media (min-width: 960px) {
+  .nc-row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: stretch; }
+  .nc-row.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .nc-row.flip .nc { order: 2; }
 }
-.feat-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
-.feat-shot.phone { display: grid; justify-items: center; }
-.feat-shot.phone picture { width: 38%; margin-top: 6%; }
-.feat-shot.phone img { height: auto; border-radius: 20px 20px 0 0; box-shadow: 0 0 0 6px #121a19, 0 18px 40px rgba(15, 23, 42, 0.28); }
-a.feat-shot:hover { border-color: var(--accent); }
-.feat-play {
-  position: absolute; left: 12px; bottom: 12px; display: none; align-items: center; gap: 7px;
-  padding: 8px 13px 8px 11px; border-radius: 8px; font: 600 13.5px/1 var(--font-body);
-  color: #fff; background: rgba(13, 22, 20, 0.84);
+.nc-row .nc { min-height: 400px; }
+.nc-clip { position: relative; isolation: isolate; align-self: center; margin: 0; }
+.nc-clip::before {   /* the database's colour, glowing behind its window */
+  content: ""; position: absolute; z-index: -1; inset: 10% 6% -8%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 30%, transparent), transparent);
+  filter: blur(40px);
 }
-html.js .feat-play { display: inline-flex; }
-.feat-play svg { width: 12px; height: 12px; fill: currentColor; }
-a.feat-shot:hover .feat-play { background: var(--accent-hover); }
-.feat-body { padding-top: 20px; }
-.feat h3 { display: flex; align-items: center; gap: 11px; font-size: 1.25rem; margin-bottom: 10px; }
-.feat p { font-size: 16px; max-width: 36em; margin-bottom: 10px; }
+.nc-clip .window { box-shadow: 0 1px 2px rgba(10, 40, 35, 0.06), 0 26px 60px -24px color-mix(in srgb, var(--c1) 50%, transparent); }
+.nc-clip .live-clip { background: var(--bg-band); }
+.nc-shot img { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; object-fit: cover; object-position: top left; }
 .feat-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; margin: 0; font-size: 15px; font-weight: 600; }
 .feat-links button {
   display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; cursor: pointer;
@@ -529,28 +525,108 @@ a.feat-shot:hover .feat-play { background: var(--accent-hover); }
 .feat-links button[hidden] { display: none; }
 .feat-links button:hover { text-decoration: underline; }
 .feat-links button svg { width: 12px; height: 12px; fill: currentColor; }
-@media (min-width: 860px) {
-  .feat-wide { grid-column: 1 / -1; display: grid; grid-template-columns: 5fr 7fr; gap: 48px; align-items: center; }
-  .feat-wide .feat-shot { order: 2; }
-  .feat-wide.flip { grid-template-columns: 7fr 5fr; }
-  .feat-wide.flip .feat-shot { order: 0; }
-  .feat-wide .feat-body { padding-top: 0; }
-  .feat-wide h3 { font-size: 1.6rem; letter-spacing: -0.02em; margin-bottom: 14px; }
-  .feat-wide p { font-size: 17px; }
-}
 
-/* What works the same everywhere: a row each. Its name, what it does, and
-   a sample of it in the app's own words. */
-.detail-list { border-top: 1px solid var(--line-strong); }
-.detail { display: grid; gap: 12px 32px; padding: 26px 0; border-bottom: 1px solid var(--line); }
-@media (min-width: 920px) { .detail { grid-template-columns: 250px minmax(0, 1fr) 290px; align-items: start; } }
-.detail h3 { display: flex; align-items: center; gap: 11px; font-size: 1.1rem; margin: 0; }
-.detail p { font-size: 16px; max-width: 36em; margin: 0 0 10px; }
-.sample {
-  min-width: 0; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-band);
-  font-size: 14px; line-height: 1.45; color: var(--fg-2);
+/* What works the same everywhere: a glowing card each, as the page had
+   before the pictures. Its name on a lit tile, what it does, then a neon
+   drawing of it with a pane of glass holding a sample in the app's own
+   words. Light by day, a dark tint of its colour by night. */
+.nc-grid { display: grid; gap: 20px; }
+@media (min-width: 680px) { .nc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .nc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.nc {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; min-width: 0;
+  min-height: 440px; border-radius: 22px; color: var(--fg);
+  background: radial-gradient(130% 90% at 15% 0%, color-mix(in srgb, var(--c1) 18%, #fff), #fff 72%);
+  border: 1px solid rgba(16, 52, 46, 0.08);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(10, 40, 35, 0.05), 0 18px 44px rgba(10, 40, 35, 0.09);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.25s;
 }
-.band .sample { background: var(--card); }
+.nc:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--c1) 45%, transparent); }
+.nc::after {   /* the glow behind the drawing */
+  content: ""; position: absolute; z-index: -1; left: 10%; right: 10%; bottom: 4%; height: 55%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 30%, transparent), transparent);
+  filter: blur(26px); opacity: 0.7; transition: opacity 0.25s;
+}
+.nc:hover::after { opacity: 1; }
+.nc h3 { display: flex; align-items: center; gap: 14px; margin: 0; padding: 24px 24px 0; font-size: 1.15rem; letter-spacing: -0.015em; }
+.nc .ic {
+  width: 46px; height: 46px; border-radius: 13px; color: color-mix(in srgb, var(--c1) 70%, #0b2a26);
+  background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(16, 52, 46, 0.08);
+  box-shadow: inset 0 1px 0 #fff, 0 6px 16px rgba(10, 40, 35, 0.08);
+}
+.nc .ic svg { width: 22px; height: 22px; }
+.nc-copy { padding: 14px 24px 0; }
+.nc-copy p { margin: 0 0 10px; font-size: 15.5px; line-height: 1.55; color: var(--fg-2); }
+.nc .feat-links { font-size: 14.5px; }
+.nc .feat-links a, .nc .feat-links button { color: color-mix(in srgb, var(--c1) 50%, #0b2a26); }
+.nc-art { position: relative; flex: 1; min-height: 200px; margin-top: 6px; }
+.nc-art .neon {
+  position: absolute; left: 6%; top: 4%; width: 60%; max-width: 230px; height: auto; overflow: visible;
+  fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round;
+  filter: brightness(0.82) saturate(1.25) drop-shadow(0 0 5px color-mix(in srgb, var(--c1) 45%, transparent));
+}
+.nc-glass {
+  position: absolute; left: 34%; right: -1px; bottom: -1px; padding: 14px 16px 16px;
+  border-radius: 16px 0 0 0; font-size: 14px; line-height: 1.45; color: var(--fg);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.9); border-right: 0; border-bottom: 0;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: inset 0 1px 0 #fff, -10px -10px 30px color-mix(in srgb, var(--c1) 14%, transparent), 0 0 0 1px rgba(16, 52, 46, 0.05);
+}
+.nc .gl-pill { color: #fff; background: color-mix(in srgb, var(--c1) 75%, #0b2a26); box-shadow: 0 6px 16px color-mix(in srgb, var(--c1) 35%, transparent); }
+.nc .gl-grid .on { outline-color: color-mix(in srgb, var(--c1) 80%, #0b2a26); }
+.nc .gl-chips span { color: color-mix(in srgb, var(--c1) 60%, #0b2a26); background: color-mix(in srgb, var(--c1) 16%, transparent); }
+.nc .gl-field i { background: var(--c1); }
+@media (max-width: 680px) { .nc { min-height: 400px; } .nc-glass { left: 24%; } }
+/* The AI assistants card leads the glowing cards, tinted in its blue. */
+#features .ai-card {
+  border-color: rgba(16, 52, 46, 0.08); border-radius: 22px;
+  background: radial-gradient(120% 80% at 10% 0%, color-mix(in srgb, var(--c1) 16%, #fff), #fff 70%);
+  box-shadow: inset 0 1px 0 #fff, 0 18px 44px rgba(10, 40, 35, 0.09);
+}
+@media (prefers-reduced-motion: reduce) { .nc, .nc:hover { transform: none; } }
+
+@media (prefers-color-scheme: dark) {
+  .nc-clip::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 34%, transparent), transparent); }
+  .nc-clip .window { box-shadow: 0 0 0 1px color-mix(in srgb, var(--c1) 12%, transparent), 0 30px 80px -24px color-mix(in srgb, var(--c1) 45%, transparent); }
+  .nc-art .neon {
+    filter: drop-shadow(0 0 3px var(--c1)) drop-shadow(0 0 12px color-mix(in srgb, var(--c1) 60%, transparent));
+  }
+  .nc {
+    color: #eef4f2;
+    background: radial-gradient(130% 90% at 15% 0%, var(--a), var(--b) 70%);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.35);
+  }
+  .nc:hover { border-color: rgba(255, 255, 255, 0.14); }
+  .nc::after { background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 38%, transparent), transparent); opacity: 0.8; }
+  .nc h3 { color: #fff; }
+  .nc .ic {
+    color: var(--c1); background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 18px rgba(0, 0, 0, 0.45);
+  }
+  .nc .ic svg { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c1) 70%, transparent)); }
+  .nc-copy p { color: rgba(238, 244, 242, 0.84); }
+  .nc .feat-links a, .nc .feat-links button { color: color-mix(in srgb, var(--c1) 70%, #fff); }
+  .nc-glass {
+    color: rgba(255, 255, 255, 0.92);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), -10px -10px 30px rgba(0, 0, 0, 0.25);
+  }
+  .nc-glass .gl-row b, .nc-glass .gl-strong, .nc-glass .gl-big, .nc-glass .gl-mono.gl-strong, .nc-glass .gl-menu b { color: #fff; }
+  .nc-glass .gl-row span, .nc-glass .gl-mono, .nc-glass .gl-grid span:nth-child(-n+3) { color: rgba(255, 255, 255, 0.55); }
+  .nc-glass .gl-grid span, .nc-glass .gl-menu { border-color: rgba(255, 255, 255, 0.1); }
+  .nc-glass .gl-field { background: rgba(0, 0, 0, 0.25); border-color: rgba(255, 255, 255, 0.16); color: #fff; }
+  .nc .gl-pill { color: #170a14; background: var(--c1); box-shadow: 0 0 16px color-mix(in srgb, var(--c1) 55%, transparent); }
+  .nc .gl-grid .on { outline-color: var(--c1); box-shadow: 0 0 14px color-mix(in srgb, var(--c1) 45%, transparent); }
+  .nc .gl-chips span { color: #fff; background: color-mix(in srgb, var(--c1) 30%, transparent); border: 1px solid color-mix(in srgb, var(--c1) 50%, transparent); }
+  #features .ai-card {
+    border-color: rgba(255, 255, 255, 0.07);
+    background: radial-gradient(120% 80% at 10% 0%, #0d1a44, #060a18 70%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.35);
+  }
+}
 .gl-row { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gl-row b { font-weight: 600; color: var(--fg); }
 .gl-row span { margin-left: auto; padding-left: 10px; color: var(--fg-3); font: 500 12.5px var(--font-mono); }
