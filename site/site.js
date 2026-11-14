@@ -439,14 +439,12 @@ var bmClips = (function () {
   var screen = video.parentNode;
   var base = video.getAttribute('poster').replace(/[^/]*$/, '');
   var player = bmClips.mount(video);
-  var title = document.getElementById('stage-title');
   var caption = document.getElementById('stage-caption');
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var chosen = false;     // the visitor picked a tab: stop moving on by itself
   var inView = false;
   var current = 0;
   var loaded = -1;
-  var prefix = title ? title.textContent.replace(/—.*$/, '— ') : 'BioManager — ';
   function clip(i) { return tabs[i].dataset.clip; }
   function wanted() { return inView && !document.hidden && (!calm || chosen); }
   function load(i) {
@@ -466,7 +464,6 @@ var bmClips = (function () {
       t.tabIndex = j === i ? 0 : -1;
     });
     screen.setAttribute('aria-labelledby', tabs[i].id);
-    if (title) title.textContent = prefix + tabs[i].querySelector('b').textContent;
     caption.innerHTML = '';
     var b = document.createElement('b');
     b.textContent = tabs[i].querySelector('small').textContent;
@@ -560,8 +557,7 @@ var bmClips = (function () {
   var base = (document.querySelector('link[rel=stylesheet]').getAttribute('href') || '').replace(/style\.css(\?.*)?$/, '') + 'assets/clips/';
   var dialog = document.createElement('dialog');
   dialog.className = 'clip-dialog';
-  dialog.innerHTML = '<div class="window-bar"><i></i><i></i><i></i><span></span>' +
-    '<button type="button" class="clip-close" aria-label="' + (zh ? '关闭' : 'Close') + '">×</button></div>' +
+  dialog.innerHTML = '<button type="button" class="clip-close" aria-label="' + (zh ? '关闭' : 'Close') + '">×</button>' +
     '<video muted loop playsinline disablepictureinpicture></video>' +
     '<div class="clip-text"><p></p><a></a></div>';
   document.body.appendChild(dialog);
@@ -580,7 +576,6 @@ var bmClips = (function () {
       if (e.metaKey || e.ctrlKey || e.shiftKey) return;   // a new tab: the guide, as the link says
       e.preventDefault();
       var title = card.querySelector('h3').textContent;
-      dialog.querySelector('.window-bar span').textContent = 'BioManager — ' + title;
       var p = dialog.querySelector('.clip-text p');
       p.innerHTML = '';
       var b = document.createElement('b'); b.textContent = title + (zh ? '。' : '. ');
