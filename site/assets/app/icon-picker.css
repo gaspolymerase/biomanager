@@ -42,3 +42,15 @@
   color: #fff;
 }
 .icon-picker-choice:has(input:focus-visible) { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+
+/* Icons · Emoji · SVG (a notebook topic's icon): one set at a time. */
+.icon-picker-tabs { margin: 0 0 8px; }
+.icon-picker-pane[hidden], .icon-picker-grid[hidden] { display: none !important; }
+.icon-picker-emoji { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 17px; line-height: 1; }
+.icon-picker-svg { width: 18px; height: 18px; object-fit: contain; }
+.icon-picker-own { display: flex !important; align-items: center; gap: 8px; margin: 10px 0 0 !important; color: var(--color-muted); font-size: 12px; }
+.icon-picker-own input { width: 72px !important; text-align: center; font-size: 16px; }
+.icon-picker-hint { display: block; margin-top: 6px; color: var(--color-muted); font-size: 11px; line-height: 1.4; }
+.icon-picker-error { display: block; margin-top: 4px; color: var(--color-danger-600); font-size: 12px; }
+.icon-picker-pane > .btn { margin-top: 8px; }
+.icon-picker-pane > .icon-picker-grid:empty { display: none; }
