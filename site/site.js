@@ -574,7 +574,7 @@ var bmClips = (function () {
   dialog.addEventListener('close', function () { player.unload(); });
   openers.forEach(function (opener) {
     opener.hidden = false;
-    var card = opener.closest('.feat, .nc');
+    var card = opener.closest('.nc');
     if (!card) return;
     opener.addEventListener('click', function (e) {
       if (e.metaKey || e.ctrlKey || e.shiftKey) return;   // a new tab: the guide, as the link says

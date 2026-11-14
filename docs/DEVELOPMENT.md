@@ -4711,18 +4711,17 @@ teal in them).
   WebM), the others the smaller `.webm`; if the browser won't start it on
   its own (Safari in Low Power Mode) it starts at the visitor's first tap,
   click or key, and the browser's own play button is hidden over it.
-- **Features** shows the app. Each database is an `article.feat`: a
-  picture of it (`.feat-shot`, its clip's still in this language, light or
-  dark with the page; a screenshot where there is no clip), then its name,
-  what it does and a link to its guide page. The first two run the page's
-  width, the rest sit two across. A picture with `data-clip-open` opens that
-  clip (from `site/assets/clips/`, made by `scripts/live-clips.py`) in a
-  window with a link on to the guide; without scripts, or with ⌘-click, it
-  is just that link. Each database keeps a colour of its own (`--c1`,
-  `--c2` in its `style`): its icon is lit in it and its picture glows in it
-  from behind, and the two that run the page's width have a neon line
-  drawing under their words (`.feat-art`, an inline SVG stroked with the
-  colours, glowing by `drop-shadow`).
+- **Features** shows each database as a row (`article.nc-row` in
+  `.nc-rows`): its glowing card (`.nc`, as below: its icon, what it does,
+  a link to its guide page, its neon drawing and a pane of glass with a
+  sample) and beside it its clip in a window (`figure.nc-clip`), which
+  plays by itself while on screen as the guide's clips do (a
+  `video[data-clip-src]`; with reduced motion it waits for a click). Card
+  and clip swap sides row by row (`.flip`); on a phone the clip comes
+  under its card. The row carries the database's colours (`--c1`, `--c2`,
+  `--a`, `--b`), which tint the card and glow behind the clip. Mouse colony
+  plays the litter clip and Racks the census one; Plants has no clip and
+  shows a screenshot in the same window (`.nc-shot`).
 - **What works the same in every database** is a glowing card each
   (`article.nc` in `.nc-grid`, three across on a wide screen): tinted in
   its colour (a soft wash by day, `--a` to `--b` by night), its icon on a

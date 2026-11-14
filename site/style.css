@@ -494,33 +494,29 @@ p { margin: 0 0 1em; color: var(--fg-2); }
 }
 
 /* ------------------------------------------------------------ the Features page */
-/* Each database: a picture of it in the app, which plays its clip when
-   opened, then what it does and where the guide covers it. The first two
-   run the page's width; the rest sit two across. */
-.feat-grid { display: grid; gap: 40px; }
-@media (min-width: 860px) { .feat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px 40px; } }
-.feat { display: flex; flex-direction: column; min-width: 0; }
-.feat-shot {
-  position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 10;
-  border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--bg-band);
-  box-shadow: var(--shadow);
+/* Each database: its glowing card, and beside it its clip playing by itself
+   while on screen (a video[data-clip-src], which site.js replays), the two
+   swapping sides row by row. The card is tinted in the database's colour
+   (--c1, --c2, --a, --b on the row), which also glows behind the clip. On a
+   phone the clip comes under its card. A database with no clip shows a
+   picture of it in the same window. */
+.nc-rows { display: grid; gap: clamp(28px, 4.5vw, 64px); }
+.nc-row { display: grid; gap: 18px; }
+@media (min-width: 960px) {
+  .nc-row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: stretch; }
+  .nc-row.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .nc-row.flip .nc { order: 2; }
 }
-.feat-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
-.feat-shot.phone { display: grid; justify-items: center; }
-.feat-shot.phone picture { width: 38%; margin-top: 6%; }
-.feat-shot.phone img { height: auto; border-radius: 20px 20px 0 0; box-shadow: 0 0 0 6px #121a19, 0 18px 40px rgba(15, 23, 42, 0.28); }
-a.feat-shot:hover { border-color: var(--accent); }
-.feat-play {
-  position: absolute; left: 12px; bottom: 12px; display: none; align-items: center; gap: 7px;
-  padding: 8px 13px 8px 11px; border-radius: 8px; font: 600 13.5px/1 var(--font-body);
-  color: #fff; background: rgba(13, 22, 20, 0.84);
+.nc-row .nc { min-height: 400px; }
+.nc-clip { position: relative; isolation: isolate; align-self: center; margin: 0; }
+.nc-clip::before {   /* the database's colour, glowing behind its window */
+  content: ""; position: absolute; z-index: -1; inset: 10% 6% -8%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 30%, transparent), transparent);
+  filter: blur(40px);
 }
-html.js .feat-play { display: inline-flex; }
-.feat-play svg { width: 12px; height: 12px; fill: currentColor; }
-a.feat-shot:hover .feat-play { background: var(--accent-hover); }
-.feat-body { padding-top: 20px; }
-.feat h3 { display: flex; align-items: center; gap: 11px; font-size: 1.25rem; margin-bottom: 10px; }
-.feat p { font-size: 16px; max-width: 36em; margin-bottom: 10px; }
+.nc-clip .window { box-shadow: 0 1px 2px rgba(10, 40, 35, 0.06), 0 26px 60px -24px color-mix(in srgb, var(--c1) 50%, transparent); }
+.nc-clip .live-clip { background: var(--bg-band); }
+.nc-shot img { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 786; object-fit: cover; object-position: top left; }
 .feat-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; margin: 0; font-size: 15px; font-weight: 600; }
 .feat-links button {
   display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; cursor: pointer;
@@ -529,33 +525,6 @@ a.feat-shot:hover .feat-play { background: var(--accent-hover); }
 .feat-links button[hidden] { display: none; }
 .feat-links button:hover { text-decoration: underline; }
 .feat-links button svg { width: 12px; height: 12px; fill: currentColor; }
-@media (min-width: 860px) {
-  .feat-wide { grid-column: 1 / -1; display: grid; grid-template-columns: 5fr 7fr; gap: 48px; align-items: center; }
-  .feat-wide .feat-shot { order: 2; }
-  .feat-wide.flip { grid-template-columns: 7fr 5fr; }
-  .feat-wide.flip .feat-shot { order: 0; }
-  .feat-wide .feat-body { padding-top: 0; }
-  .feat-wide h3 { font-size: 1.6rem; letter-spacing: -0.02em; margin-bottom: 14px; }
-  .feat-wide p { font-size: 17px; }
-}
-
-/* Each database keeps the colour of its old glowing card (--c1, --c2 on
-   the article): its icon lights in it, and its picture glows in it from
-   behind. The two that run the page's width draw their neon line under the
-   words. */
-.feat[style] .ic { --ic: color-mix(in srgb, var(--c1) 68%, #0b2a26); background: color-mix(in srgb, var(--c1) 16%, transparent); }
-.feat[style] .feat-shot {
-  box-shadow: 0 1px 2px rgba(10, 40, 35, 0.06), 0 26px 60px -22px color-mix(in srgb, var(--c1) 55%, transparent);
-}
-.feat[style] a.feat-shot:hover { border-color: color-mix(in srgb, var(--c1) 70%, transparent); }
-.feat[style] a.feat-shot:hover .feat-play { background: color-mix(in srgb, var(--c1) 55%, #0d1614); }
-.feat-art { position: relative; display: none; isolation: isolate; width: min(300px, 70%); margin: 30px 0 0 -6px; }
-.feat-art::before {   /* the glow behind the drawing */
-  content: ""; position: absolute; z-index: -1; inset: 0 -20% -10%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 34%, transparent), transparent);
-  filter: blur(22px);
-}
-@media (min-width: 860px) { .feat-art { display: block; } }
 
 /* What works the same everywhere: a glowing card each, as the page had
    before the pictures. Its name on a lit tile, what it does, then a neon
@@ -596,11 +565,6 @@ a.feat-shot:hover .feat-play { background: var(--accent-hover); }
   fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round;
   filter: brightness(0.82) saturate(1.25) drop-shadow(0 0 5px color-mix(in srgb, var(--c1) 45%, transparent));
 }
-.feat-art .neon {
-  display: block; width: 100%; height: auto; overflow: visible;
-  fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round;
-  filter: brightness(0.82) saturate(1.25) drop-shadow(0 0 5px color-mix(in srgb, var(--c1) 45%, transparent));
-}
 .nc-glass {
   position: absolute; left: 34%; right: -1px; bottom: -1px; padding: 14px 16px 16px;
   border-radius: 16px 0 0 0; font-size: 14px; line-height: 1.45; color: var(--fg);
@@ -623,13 +587,9 @@ a.feat-shot:hover .feat-play { background: var(--accent-hover); }
 @media (prefers-reduced-motion: reduce) { .nc, .nc:hover { transform: none; } }
 
 @media (prefers-color-scheme: dark) {
-  .feat[style] .ic { --ic: var(--c1); background: color-mix(in srgb, var(--c1) 14%, transparent); }
-  .feat[style] .ic svg { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c1) 60%, transparent)); }
-  .feat[style] .feat-shot {
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--c1) 14%, transparent), 0 30px 80px -24px color-mix(in srgb, var(--c1) 50%, transparent);
-  }
-  .feat-art::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 40%, transparent), transparent); }
-  .feat-art .neon, .nc-art .neon {
+  .nc-clip::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 34%, transparent), transparent); }
+  .nc-clip .window { box-shadow: 0 0 0 1px color-mix(in srgb, var(--c1) 12%, transparent), 0 30px 80px -24px color-mix(in srgb, var(--c1) 45%, transparent); }
+  .nc-art .neon {
     filter: drop-shadow(0 0 3px var(--c1)) drop-shadow(0 0 12px color-mix(in srgb, var(--c1) 60%, transparent));
   }
   .nc {
