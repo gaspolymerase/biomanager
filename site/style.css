@@ -340,18 +340,11 @@ p { margin: 0 0 1em; color: var(--fg-2); }
   .facts > div { grid-template-columns: 1fr; gap: 3px; padding: 14px 0 0; border-bottom: 0; border-top: 1px solid var(--line-strong); }
 }
 
-/* A window around each screenshot and clip. */
+/* A frame around each screenshot and clip. */
 .window {
   margin: 0; border-radius: var(--radius); overflow: hidden;
   background: var(--card); border: 1px solid var(--line-strong); box-shadow: var(--shadow-lift);
 }
-.window-bar {
-  display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px;
-  background: var(--bg-band); border-bottom: 1px solid var(--line);
-  font: 500 12px/1 var(--font-body); color: var(--fg-3);
-}
-.window-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); flex: none; }
-.window-bar span { flex: 1; text-align: center; margin-right: 44px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ------------------------------------------------------------ clips */
 .stage-screen { position: relative; aspect-ratio: 1280 / 786; background: var(--bg-band); }
@@ -662,13 +655,11 @@ p { margin: 0 0 1em; color: var(--fg-2); }
   background: #0d1312; color: #eef4f2; box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
 .clip-dialog::backdrop { background: rgba(3, 6, 5, 0.72); }
-.clip-dialog .window-bar { background: #161d1c; border-bottom: 1px solid rgba(255, 255, 255, 0.08); color: #9aa9a6; height: 40px; }
-.clip-dialog .window-bar i { background: rgba(255, 255, 255, 0.16); }
 .clip-dialog .clip-close {
-  margin-left: auto; width: 28px; height: 28px; border-radius: 8px; border: 0; cursor: pointer;
-  background: rgba(255, 255, 255, 0.08); color: #eef4f2; font-size: 18px; line-height: 1;
+  position: absolute; top: 12px; right: 12px; z-index: 1; width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer;
+  background: rgba(8, 12, 11, 0.62); color: #eef4f2; font-size: 20px; line-height: 1;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
-.clip-dialog .window-bar span { margin-right: 0; }
 .clip-dialog video { display: block; width: 100%; aspect-ratio: 1280 / 786; background: #0e1312; }
 .clip-dialog .clip-text { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; padding: 16px 20px 18px; }
 .clip-dialog .clip-text p { margin: 0; flex: 1 1 320px; color: rgba(238, 244, 242, 0.8); font-size: 15.5px; }

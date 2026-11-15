@@ -32,7 +32,7 @@ _spec.loader.exec_module(guide_pages)
 # Left out: the app's clips and screenshots, a page's group label, and the
 # guide home's cards (every page they link to follows anyway).
 SKIP_TAGS = {"video", "img", "script", "style", "svg"}
-SKIP_CLASSES = {"eyebrow", "doc-clip", "window-bar", "areas"}
+SKIP_CLASSES = {"eyebrow", "doc-clip", "areas"}
 BLOCKS = {"p", "div", "section", "h1", "h2", "h3", "h4", "ul", "ol", "dl", "table", "figure", "figcaption", "details", "summary"}
 HEADING = {"h1": "## ", "h2": "### ", "h3": "#### ", "h4": "##### "}
 VOID = {"br", "img", "hr", "source", "input", "meta", "link", "wbr"}
