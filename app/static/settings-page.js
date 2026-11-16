@@ -1,18 +1,19 @@
-/* Settings (settings.html): font, text size and the rows that save as they change. */
-// Font: the page changes at once (the choice saves itself). Text size: in
-// the Mac app, Smaller / Default / Larger set the window's zoom; elsewhere
-// the browser's zoom does it, so the row stays hidden.
+/* Settings (settings.html): appearance, text size and the rows that save as they change. */
+// Mode, look, font, row height and row lines: each saves itself (data-autosave-form)
+// and the page changes at once, as base.html would mark it (app/appearance.py).
+// Text size: in the Mac app, Smaller / Default / Larger set the window's zoom;
+// elsewhere the browser's zoom does it, so the row stays hidden.
 (function () {
-  // Look: Liquid Glass or Solid, changed at once too.
-  var look = document.querySelector('[data-ui-look]');
-  if (look) look.addEventListener('change', function () {
-    if (look.value === 'solid') document.documentElement.setAttribute('data-look', 'solid');
-    else document.documentElement.removeAttribute('data-look');
-  });
-  var font = document.querySelector('[data-ui-font]');
-  if (font) font.addEventListener('change', function () {
-    if (font.value === 'system' || font.value === 'inter') document.documentElement.setAttribute('data-font', font.value);
-    else document.documentElement.removeAttribute('data-font');
+  // Each choice's attribute on <html>, and its default, which leaves it out.
+  var MARKS = { mode: ['data-theme', 'auto'], look: ['data-look', 'glass'], font: ['data-font', 'geist'],
+                density: ['data-density', 'roomy'], rows: ['data-rows', 'lines'] };
+  document.querySelectorAll('[data-ui]').forEach(function (select) {
+    var attr = MARKS[select.dataset.ui];
+    if (!attr) return;
+    select.addEventListener('change', function () {
+      if (select.value === attr[1]) document.documentElement.removeAttribute(attr[0]);
+      else document.documentElement.setAttribute(attr[0], select.value);
+    });
   });
   var seg = document.querySelector('[data-text-size]');
   var row = document.querySelector('[data-text-size-row]');
@@ -211,12 +212,12 @@
   var latest = 0;
   form.addEventListener('change', function () {
     var data = new FormData(form);
-    var glyph = data.get('glyph'), color = data.get('color');
+    var glyph = data.get('glyph'), color = data.get('color'), ground = data.get('ground');
     form.querySelectorAll('img[data-glyph]').forEach(function (img) {
-      img.src = urls[img.dataset.glyph + '/' + color];
+      img.src = urls[img.dataset.glyph + '/' + color + '/' + ground];
     });
     document.querySelectorAll('img[data-app-icon]').forEach(function (img) {
-      img.src = urls[glyph + '/' + color];
+      img.src = urls[glyph + '/' + color + '/' + ground];
     });
     var mine = ++latest;
     say(t('Saving…'));
@@ -232,9 +233,39 @@
       document.getElementById('brand-css').textContent = body.brand_css;
       var link = document.getElementById('app-icon-link');
       if (link) link.href = body.icon;
+      // The Mac app's Dock follows (static/shell.js).
+      if (window.BiomanagerShell && window.BiomanagerShell.syncDockIcon) window.BiomanagerShell.syncDockIcon();
       say(t('Saved'));
     }).catch(function () {
       if (mine === latest) say(t('Not saved. Check the connection and pick again.'));
+    });
+  });
+})();
+
+// A theme sets the icon and every choice at once (app/appearance.py THEMES):
+// saved, the Mac app's text size set to go with it, and the page comes back in it.
+(function () {
+  var form = document.querySelector('[data-theme-form]');
+  if (!form) return;
+  form.addEventListener('submit', function (event) {
+    var button = event.submitter;
+    if (!button || !button.dataset.themeName) return;
+    event.preventDefault();
+    var data = new FormData(form);
+    data.set('theme', button.dataset.themeName);
+    form.querySelectorAll('.theme-card').forEach(function (card) { card.disabled = true; });
+    fetch(window.location.pathname, {
+      method: 'POST', body: data, credentials: 'same-origin', headers: {'X-Autosave': '1'}
+    }).then(function (res) {
+      return res.json();
+    }).then(function (body) {
+      if (!body.ok) throw new Error('not saved');
+      var shell = window.BiomanagerShell;
+      if (shell && shell.desktopCall && body.text_size) shell.desktopCall('set_text_size', body.text_size);
+      window.location.reload();
+    }).catch(function () {
+      form.querySelectorAll('.theme-card').forEach(function (card) { card.disabled = false; });
+      if (window.BiomanagerShell) window.BiomanagerShell.toast(t('Not saved. Check the connection and pick again.'), 'error');
     });
   });
 })();

@@ -2,7 +2,7 @@
 {# A page with a sidebar of its own (the notebook) starts with this one
    folded to its icons: block rail_mode says "compact". #}
 {% set rail_mode = self.rail_mode()|trim %}
-<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if ui_look == 'solid' %} data-look="solid"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
+<html lang="{{ 'zh-CN' if current_language() == 'zh' else 'en' }}"{% if ui_font in ('inter', 'system') %} data-font="{{ ui_font }}"{% endif %}{% if ui_look == 'solid' %} data-look="solid"{% endif %}{% if ui and ui.mode != 'auto' %} data-theme="{{ ui.mode }}"{% endif %}{% if ui and ui.density != 'roomy' %} data-density="{{ ui.density }}"{% endif %}{% if ui and ui.rows != 'lines' %} data-rows="{{ ui.rows }}"{% endif %}{% if rail_mode %} data-rail-mode="{{ rail_mode }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -29,6 +29,11 @@
           href="{{ url_for('static', filename='tailwind.css') }}?v={{ asset_version('tailwind.css') }}">
     {# A small animation while a page takes more than a second to come (static/loader.js). #}
     <link rel="stylesheet" href="{{ url_for('static', filename='loader.css') }}?v={{ asset_version('loader.css') }}">
+    {# Settings → Appearance (app/appearance.py): dark mode when it is chosen
+       rather than the computer's (theme-dark.css, built from tailwind.css by
+       scripts/theme-dark-css.py), and the rows of a sheet (appearance.css). #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme-dark.css') }}?v={{ asset_version('theme-dark.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='appearance.css') }}?v={{ asset_version('appearance.css') }}">
     {# The accent that matches the person's app icon (app/appearance.py). #}
     <style id="brand-css">{{ brand_css|safe }}</style>
 

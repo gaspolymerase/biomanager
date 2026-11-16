@@ -217,12 +217,15 @@ def _owner_badge(name: str) -> Markup:
     )
 
 
-def app_icon_url(glyph: str, color: str) -> str:
+def app_icon_url(glyph: str, color: str, ground: str = appearance.DEFAULT_GROUND) -> str:
     # The default is the static icon the build script writes, so the sign-in
     # page and everyone who never chose share one cached file.
-    if appearance.is_default(glyph, color):
-        return url_for("static", filename="icon.svg", v=appearance.version(glyph, color))
-    return url_for("app_icon", glyph=glyph, color=color, v=appearance.version(glyph, color))
+    v = appearance.version(glyph, color, ground)
+    if appearance.is_default(glyph, color, ground):
+        return url_for("static", filename="icon.svg", v=v)
+    if ground == appearance.DEFAULT_GROUND:
+        return url_for("app_icon", glyph=glyph, color=color, v=v)
+    return url_for("app_icon_on", glyph=glyph, color=color, ground=ground, v=v)
 
 
 def builtin_labels() -> dict[str, str]:

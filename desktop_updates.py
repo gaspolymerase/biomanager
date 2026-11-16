@@ -16,9 +16,10 @@ until the new one has started. Where that isn't possible (run from
 source, a folder it can't write to, the Linux .tar.gz) "Download" opens
 the file in the browser instead.
 
-Preferences (the automatic check, a skipped version, appearance and zoom)
-are desktop-prefs.json in the data folder (app/paths.py), not in the lab's
-database: they belong to this computer.
+Preferences (the automatic check, a skipped version, appearance, zoom and
+which icon the Dock shows) are desktop-prefs.json in the data folder
+(app/paths.py), not in the lab's database: they belong to this computer. The
+Dock's icon itself is dock-icon.png beside it.
 """
 from __future__ import annotations
 
@@ -37,7 +38,8 @@ from app.releases import LATEST_API, RELEASES_PAGE, REPO, is_newer, parse_versio
 GUIDE_URL = "https://biomanager.org/guide.html"
 ISSUES_URL = f"https://github.com/{REPO}/issues/new"
 CHECK_EVERY = 24 * 3600
-DEFAULT_PREFS = {"check_updates": True, "last_check": 0, "skip_version": "", "appearance": "system", "zoom": 1.0}
+DEFAULT_PREFS = {"check_updates": True, "last_check": 0, "skip_version": "", "appearance": "system", "zoom": 1.0,
+                 "dock_icon": ""}
 
 _ROOT = Path(__file__).resolve().parent
 
@@ -80,9 +82,14 @@ def _git_version() -> str:
 _prefs_lock = threading.RLock()     # reads too: Windows can't replace a file open for reading
 
 
-def _prefs_path() -> Path:
+def prefs_dir() -> Path:
+    """Where the desktop app keeps its preferences (and the Dock's icon)."""
     from app.paths import data_dir
-    return data_dir() / "desktop-prefs.json"
+    return data_dir()
+
+
+def _prefs_path() -> Path:
+    return prefs_dir() / "desktop-prefs.json"
 
 
 def load_prefs() -> dict:

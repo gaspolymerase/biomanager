@@ -134,6 +134,29 @@ class Bridge(unittest.TestCase):
         self.assertEqual(desktop_menu._state["nav"],
                          [{"label": "Databases", "links": [{"label": "Mouse colony", "url": "/colony?view=mice"}]}])
 
+    def test_the_dock_takes_a_png_and_keeps_it(self):
+        # Settings → Appearance: the page draws the person's icon and the Mac
+        # app shows it in the Dock, now and at the next start.
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+        url = "data:image/png;base64," + __import__("base64").b64encode(png).decode()
+        api = desktop_menu.DesktopApi()
+        helper = mock.MagicMock()
+        with mock.patch.object(desktop_menu.sys, "platform", "darwin"), \
+                mock.patch.dict(sys.modules, {"PyObjCTools": helper, "PyObjCTools.AppHelper": helper.AppHelper}):
+            self.assertTrue(api.set_dock_icon(url, "/app-icon/fly/coral.svg?v=1"))
+            self.assertEqual(desktop_menu._dock_icon_path().read_bytes(), png)
+            self.assertEqual(du.load_prefs()["dock_icon"], "/app-icon/fly/coral.svg?v=1")
+            # Not a PNG, or not a picture at all: refused, the icon kept.
+            self.assertFalse(api.set_dock_icon("data:image/png;base64,PHN2Zz4=", "x"))
+            self.assertFalse(api.set_dock_icon("https://example.org/icon.png", "x"))
+            self.assertEqual(du.load_prefs()["dock_icon"], "/app-icon/fly/coral.svg?v=1")
+            # Empty: the app's own icon again.
+            self.assertTrue(api.set_dock_icon("", ""))
+            self.assertFalse(desktop_menu._dock_icon_path().exists())
+            self.assertEqual(du.load_prefs()["dock_icon"], "")
+        with mock.patch.object(desktop_menu.sys, "platform", "win32"):
+            self.assertFalse(api.set_dock_icon(url, "x"))   # only a Mac has a Dock
+
     @unittest.skipUnless(__import__("importlib").util.find_spec("webview"), "pywebview isn't installed (CI)")
     def test_windows_and_linux_get_plain_menus(self):
         titles = [m.title for m in desktop_menu.plain_menus()]

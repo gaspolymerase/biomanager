@@ -376,17 +376,72 @@ not just large — that is where they fail.
 
 `app/static/icon.svg` is laid out on Apple's macOS icon grid — an 824×824
 rounded square inset in a 1024 canvas with a 185.4 corner radius — so it
-sits correctly beside native apps in the Dock. The mark is a double helix,
-the one symbol every organism in the app shares.
+sits correctly beside native apps in the Dock. The default mark is a double
+helix, the one symbol every organism in the app shares, in jade.
 
-One drawing in `app/appearance.py` serves every size, from 28px beside a
-heading to 512px on a desktop, so it is plain vector shapes: no SVG filters
-(a blur or drop shadow is drawn at screen resolution by some browsers, Safari
-among them, and turns the white edges to haze) and curves as Béziers, not
-runs of short lines. `scripts/build-app-icon.py` re-renders the SVG and every
-PNG, `.icns`, `.ico` and Android layer after a change, and the website's
-copies (`site/assets/icon.svg`, `icon-192.png`, `apple-touch-icon.png`); it
+Each person picks a picture, one of eight colours (`PALETTES`) and a ground
+(`GROUNDS`: on its colour, on white, on black) in Settings → Appearance; the
+choice is kept as `app_icon:<username>` = `glyph/color/ground`, and an older
+`glyph/color` reads as on its colour, its old colour mapped to the nearest
+(`OLD_COLORS`). `/app-icon/<glyph>/<color>.svg` and
+`/app-icon/<glyph>/<color>/<ground>.svg` serve them, cached for good: the
+address carries the drawing's version.
+
+The drawings in `app/appearance.py` follow Apple's guidance for Liquid
+Glass icons: flat shapes with clear edges, details cut out with masks so the
+ground shows through, and secondary parts (the mouse's far ear, the tube's
+cap, the colonies) as the same fill at lower opacity, rather than a second
+colour. The only effects are the ones the system adds to its own icons, as
+two small filters: `bm-glass` lets a little of the ground through and runs a
+thin light along the top-left and bottom-right edges, and `bm-lift` is a soft
+neutral shadow. No bevels, inner shadows or glows: Apple asks for none, and
+they turn to mud at 28px. The filters sit in user space over the whole
+canvas (a stroke's round end would be clipped by a filter region made from
+the fill's box), and the SVG is always drawn at or below its 1024 size, so
+Safari's habit of filtering at the drawn size never blurs it.
+
+`scripts/build-app-icon.py` re-renders the default to the SVG and every PNG,
+`.icns`, `.ico` and Android layer after a change, and the website's copies
+(`site/assets/icon.svg`, `icon-192.png`, `apple-touch-icon.png`); it
 renders with Quick Look on a Mac and with Chromium (Playwright) elsewhere.
+`tests/test_appearance.py` checks the static icon is the current drawing.
+
+The Mac app's Dock shows the person's own icon. `syncDockIcon` in
+`static/shell.js` asks the app which icon it shows (`DesktopApi.dock_icon`,
+answered through `window.bmDockIcon`) and, when it differs, draws the SVG to
+a 512px canvas, where WebKit renders the filters, and sends the PNG
+(`DesktopApi.set_dock_icon`). The app keeps it as `dock-icon.png` beside
+`desktop-prefs.json` and sets it with `NSApplication.setApplicationIconImage`,
+again at each start; the default icon puts back the bundle's own. While the
+app is closed, Finder and the Dock show the bundle's icon: the app leaves its
+signed bundle as it was installed.
+
+### Appearance choices and themes
+
+Besides the icon, `appearance.CHOICES` holds each person's mode (auto,
+light, dark), look (glass, solid), font, row height (roomy, regular,
+compact) and row lines (lines, stripes, both, none), each as
+`<name>:<username>` in app_settings. `base.html` marks a choice that is not
+the default on `<html>`: `data-theme`, `data-look`, `data-font`,
+`data-density`, `data-rows`. `static/settings-page.js` sets the same marks
+as a choice changes, so the page changes before the save comes back.
+
+- **Mode.** The stylesheets give dark mode under
+  `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) … }`,
+  so `data-theme="light"` already keeps a page light on a dark computer.
+  Dark on a light computer needs each rule again as
+  `:root[data-theme="dark"] …`. Many have that copy beside them;
+  `scripts/theme-dark-css.py` writes the rest to `static/theme-dark.css`
+  (`tests/test_appearance.py` checks it is current). Run it after changing a
+  dark-mode rule, and give a rule that uses `@apply` its copy in place.
+- **Rows.** `static/appearance.css`, plain CSS outside Tailwind's layers so
+  it wins over the components it adjusts: cell heights for `.sheet-table`
+  and `.dt`, the divider lines turned off, and stripes on the rows (not the
+  cells, so hovering and selecting still show over them).
+- **Themes.** `appearance.THEMES` names a set of choices and an icon; the
+  Settings action `theme` saves them all and the page reloads in it. The
+  Mac app's text size goes with a theme too (`DesktopApi.set_text_size`).
+  A theme is not saved as such: Settings marks the one everything matches.
 
 ## Interface
 

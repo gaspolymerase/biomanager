@@ -119,6 +119,8 @@ BioManager then makes those databases, the racks and incubators too, and shows t
 
 **Easier to read.** Text is set in Inter, which tells I, l and 1 apart in IDs and genotypes, with your computer's own Chinese font. **Settings → Appearance & language → Font** switches to the computer's font instead (SF Pro on a Mac, Segoe UI on Windows). **Text size** there makes everything smaller or larger in the Mac app; in a browser, its zoom does the same (`⌘` `+` and `⌘` `−`, or `Ctrl` on Windows).
 
+**Your own look.** The rest of **Settings → Appearance & language** is yours alone too. A **Theme** sets everything at once: **Glass** (the default), **Paper white**, **Night** or **Bench**. Then change any part: **Mode** keeps BioManager light or dark whatever your computer does; **Look** is Liquid Glass or Solid; **Row height** and **Between rows** set how tall a sheet's rows are and whether lines, stripes or both tell them apart. Your app icon (a picture, one of eight colours, on its colour, white or black) shows in the browser tab, at the top of the sidebar and, in the Mac app, in the Dock.
+
 ### Troubleshooting
 
 #### The app won't open on my Mac

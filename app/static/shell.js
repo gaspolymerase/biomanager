@@ -290,6 +290,34 @@
     look();
   }
 
+  // The Mac app's Dock shows the person's own app icon (Settings →
+  // Appearance). It is drawn here, where the SVG's glass renders, and handed
+  // to the app as a PNG with the icon's address, which carries its version,
+  // as the key; the app answers with the key it has (window.bmDockIcon) so
+  // it is sent only when it changed. The default icon is the app's own.
+  function syncDockIcon() {
+    whenDesktop(() => {
+      const link = document.getElementById('app-icon-link');
+      if (!link) return;
+      const url = link.getAttribute('href');
+      window.bmDockIcon = (key) => {
+        if (key === url || (!key && url.startsWith('/static/icon.svg'))) return;
+        if (url.startsWith('/static/icon.svg')) { desktopCall('set_dock_icon', '', ''); return; }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 512;
+          canvas.getContext('2d').drawImage(img, 0, 0, 512, 512);
+          let png = '';
+          try { png = canvas.toDataURL('image/png'); } catch (_) { return; }
+          desktopCall('set_dock_icon', png, url);
+        };
+        img.src = url;
+      };
+      desktopCall('dock_icon');
+    });
+  }
+
   // In the desktop app, the Go menu lists what this sidebar shows
   // (desktop_menu.py). Anywhere else this does nothing.
   function shareNavWithDesktop() {
@@ -392,6 +420,7 @@
 
   function init() {
     shareNavWithDesktop();
+    syncDockIcon();
     setupRailMenus();
     setupRailOrder();
     document.querySelectorAll('[data-rail-toggle]').forEach((el) => {
@@ -837,7 +866,7 @@
     init();
   }
 
-  window.BiomanagerShell = { toast, toggleRail, setRail, setDrawer, desktopCall, whenDesktop, fillChoices };
+  window.BiomanagerShell = { toast, toggleRail, setRail, setDrawer, desktopCall, whenDesktop, fillChoices, syncDockIcon };
 })();
 
 /* Confirm before a destructive submit: <form data-confirm="Delete V12?">,
