@@ -1,0 +1,60 @@
+/* Settings → Appearance (app/appearance.py): what base.html marks on <html>
+   for the rows of a sheet, and the theme cards on the Settings page.
+   The defaults (roomy rows with lines between them) are tailwind.css's own,
+   so they are marked by leaving the attribute out. Unlayered on purpose: it
+   wins over the component layer it adjusts. */
+
+/* --- Row height (data-density) ------------------------------------------ */
+:root[data-density="regular"] .dt-laid .sheet-table tbody td { height: 2rem; }
+:root[data-density="compact"] :is(.sheet-table, .dt-laid .sheet-table) tbody td { height: 1.625rem; }
+:root[data-density="compact"] .dt tbody td { padding-top: 1px; padding-bottom: 1px; }
+
+/* --- Row lines (data-rows) ---------------------------------------------- */
+:root { --row-stripe: rgb(20 30 40 / 0.035); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --row-stripe: rgb(255 255 255 / 0.04); }
+}
+:root[data-theme="dark"] { --row-stripe: rgb(255 255 255 / 0.04); }
+
+:root:is([data-rows="stripes"], [data-rows="none"]) .dt tbody td { border-bottom-width: 0; }
+/* On the row, so hovering and selecting (on the cells) still show over it. */
+:root:is([data-rows="stripes"], [data-rows="both"]) .dt tbody > tr:nth-child(even):not(.is-selected) {
+  background-color: var(--row-stripe);
+}
+:root:is([data-rows="stripes"], [data-rows="both"]) .dt tbody > tr:nth-child(even):not(.is-selected):hover {
+  background-color: var(--sheet-hover);
+}
+
+/* --- Settings: the theme cards ------------------------------------------ */
+.theme-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; }
+@media (max-width: 560px) { .theme-cards { grid-template-columns: 1fr; } }
+.theme-card {
+  display: block; width: 100%; padding: 0; overflow: hidden; text-align: left;
+  border: 1.5px solid var(--color-hairline); border-radius: 14px;
+  background: var(--color-surface); color: var(--color-ink); cursor: pointer;
+  transition: border-color 100ms;
+}
+.theme-card:hover { border-color: var(--color-brand-300); }
+.theme-card.is-current { border-color: var(--color-brand-600); }
+.theme-card:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+.theme-card > b { display: block; padding: 8px 12px 0; font-size: 13px; font-weight: 600; }
+.theme-card > small { display: block; padding: 2px 12px 10px; font-size: 12px; line-height: 1.4; color: var(--color-muted); }
+
+/* A sketch of the app in the theme: the sidebar with the icon, and a sheet. */
+.theme-mini {
+  display: flex; gap: 6px; height: 104px; padding: 10px;
+  background: var(--m-canvas); color: var(--m-ink); font-size: 11px;
+}
+.theme-mini > * { border: 1px solid var(--m-line); border-radius: 8px; background: var(--m-pane); overflow: hidden; }
+.theme-mini-rail { flex: none; display: grid; align-content: start; gap: 6px; width: 40px; padding: 6px; }
+.theme-mini-rail img { width: 28px; height: 28px; }
+.theme-mini-rail i { display: block; height: 5px; border-radius: 3px; background: var(--m-line); }
+.theme-mini-rail i:first-of-type { background: color-mix(in srgb, var(--m-accent) 30%, transparent); }
+.theme-mini-sheet { flex: 1; min-width: 0; display: block; }
+.theme-mini-rail, .theme-mini-rail i { box-sizing: border-box; }
+.theme-mini-sheet > .r { display: flex; align-items: center; height: var(--m-row); padding: 0 8px; gap: 10px; white-space: nowrap; }
+.theme-mini-sheet > .r:first-child { justify-content: space-between; font-weight: 600; height: 24px; }
+.theme-mini-sheet > .r:first-child > span { padding: 1px 7px; border-radius: 5px; background: var(--m-accent); color: #fff; font-size: 10px; }
+.theme-mini-sheet[data-rows="lines"] > .r + .r, .theme-mini-sheet[data-rows="both"] > .r + .r { border-top: 1px solid var(--m-line); }
+.theme-mini-sheet:is([data-rows="stripes"], [data-rows="both"]) > .r:nth-child(odd):not(:first-child) { background: var(--m-stripe); }
+.theme-mini-sheet em { font-style: normal; opacity: 0.7; }

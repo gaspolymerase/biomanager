@@ -175,14 +175,35 @@
         </label>
       </form>
 
+      {# Themes (app/appearance.py THEMES): one click sets the icon and every
+         choice below; changing any of them after makes it your own. #}
+      <div class="set-title">{{ _('Theme') }}</div>
+      <form method="post" class="set-group theme-cards" data-theme-form>
+        <input type="hidden" name="action" value="theme">
+        {% for key, (theme, sketch, icon_url) in themes.items() %}
+          <button type="submit" name="theme" value="{{ key }}" class="theme-card{% if key == current_theme %} is-current{% endif %}"
+                  data-theme-name="{{ key }}" data-text-size="{{ theme.text_size }}" {% if key == current_theme %}aria-current="true"{% endif %}>
+            <span class="theme-mini" style="{{ sketch }}" aria-hidden="true">
+              <span class="theme-mini-rail"><img src="{{ icon_url }}" alt=""><i></i><i></i></span>
+              <span class="theme-mini-sheet" data-rows="{{ theme.choices.rows }}">
+                <span class="r">{{ _('Mice') }}<span>{{ _('Add') }}</span></span>
+                <span class="r">M-1042 <em>C57BL/6J</em></span><span class="r">M-1043 <em>Ai14</em></span><span class="r">M-1051 <em>Cx3cr1-Cre</em></span>
+              </span>
+            </span>
+            <b>{{ theme.label|tr }}</b>
+            <small>{{ theme.blurb|tr }}</small>
+          </button>
+        {% endfor %}
+      </form>
+
       {# App icon (app/appearance.py): its colour is also the app's accent. #}
-      {% set chosen_glyph, chosen_color = user_settings.app_icon %}
+      {% set chosen_glyph, chosen_color, chosen_ground = user_settings.app_icon %}
       <div class="set-title">{{ _('App icon and colour') }}</div>
       <form method="post" class="set-group icon-picker" id="app-icon" data-icon-picker data-urls="{{ icon_urls|tojson|forceescape }}">
         <input type="hidden" name="action" value="appearance">
         <div class="icon-picker-hero">
-          <img src="{{ icon_urls[chosen_glyph ~ '/' ~ chosen_color] }}" alt="" data-app-icon>
-          <p>{{ _('In your browser tab and the sidebar. Its colour tints buttons and highlights everywhere. The desktop and Android apps keep the helix on their launcher icon.') }}</p>
+          <img src="{{ icon_urls[chosen_glyph ~ '/' ~ chosen_color ~ '/' ~ chosen_ground] }}" alt="" data-app-icon>
+          <p>{{ _('In your browser tab, the sidebar and the Mac app’s Dock. Its colour tints buttons and highlights everywhere.') }}</p>
         </div>
         <fieldset>
           <legend>{{ _('Colour') }}</legend>
@@ -202,39 +223,79 @@
             {% for key, label in icon_glyphs.items() %}
               <label class="icon-pick">
                 <input type="radio" name="glyph" value="{{ key }}" {% if key == chosen_glyph %}checked{% endif %}>
-                <img src="{{ icon_urls[key ~ '/' ~ chosen_color] }}" alt="" data-glyph="{{ key }}">
+                <img src="{{ icon_urls[key ~ '/' ~ chosen_color ~ '/' ~ chosen_ground] }}" alt="" data-glyph="{{ key }}">
                 <span>{{ label|tr }}</span>
               </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>{{ _('Icon background') }}</legend>
+          <div class="seg">
+            {% for key, label in icon_grounds.items() %}
+              <label class="seg-item"><input type="radio" name="ground" value="{{ key }}" {% if key == chosen_ground %}checked{% endif %}>{{ label|tr }}</label>
             {% endfor %}
           </div>
         </fieldset>
         <noscript><button type="submit" class="btn btn-primary justify-self-start">{{ _('Save icon') }}</button></noscript>
       </form>
 
-      {# Font and text size. The font is saved for the person; the size is the
-         window's zoom, which only the Mac app lets the page set (desktop_menu.py
+      {# Mode, look, font, rows: saved as each changes, and the page changes at
+         once (static/settings-page.js). The text size is the window's zoom,
+         which only the Mac app lets the page set (desktop_menu.py
          DesktopApi.set_text_size), so only there is it shown. #}
+      {% set ui = user_settings.ui %}
       <div class="set-title">{{ _('Look') }}</div>
-      <form method="post" class="set-group" data-autosave-form>
+      <form method="post" class="set-group" data-autosave-form data-ui-form>
         <input type="hidden" name="action" value="profile">
         <label class="set-row">
+          <span class="set-label"><b>{{ _('Mode') }}</b><small>{{ _('Light or dark: as this computer is set, or always one.') }}</small></span>
+          <select name="ui_mode" data-ui="mode">
+            <option value="auto" {% if ui.mode == 'auto' %}selected{% endif %}>{{ _('Same as this computer') }}</option>
+            <option value="light" {% if ui.mode == 'light' %}selected{% endif %}>{{ _('Always light') }}</option>
+            <option value="dark" {% if ui.mode == 'dark' %}selected{% endif %}>{{ _('Always dark') }}</option>
+          </select>
+        </label>
+        <label class="set-row">
           <span class="set-label"><b>{{ _('Look') }}</b><small>{{ _('Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Only for you.') }}</small></span>
-          <select name="ui_look" data-ui-look>
-            <option value="glass" {% if ui_look != 'solid' %}selected{% endif %}>{{ _('Liquid Glass') }}</option>
-            <option value="solid" {% if ui_look == 'solid' %}selected{% endif %}>{{ _('Solid') }}</option>
+          <select name="ui_look" data-ui="look" data-ui-look>
+            <option value="glass" {% if ui.look != 'solid' %}selected{% endif %}>{{ _('Liquid Glass') }}</option>
+            <option value="solid" {% if ui.look == 'solid' %}selected{% endif %}>{{ _('Solid') }}</option>
+          </select>
+        </label>
+      </form>
+
+      <div class="set-title">{{ _('Rows of a sheet') }}</div>
+      <form method="post" class="set-group" data-autosave-form data-ui-form>
+        <input type="hidden" name="action" value="profile">
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Row height') }}</b><small>{{ _('How tall each row of a sheet is. Compact fits more on a screen.') }}</small></span>
+          <select name="ui_density" data-ui="density">
+            <option value="roomy" {% if ui.density == 'roomy' %}selected{% endif %}>{{ _('Roomy') }}</option>
+            <option value="regular" {% if ui.density == 'regular' %}selected{% endif %}>{{ _('Regular') }}</option>
+            <option value="compact" {% if ui.density == 'compact' %}selected{% endif %}>{{ _('Compact') }}</option>
+          </select>
+        </label>
+        <label class="set-row">
+          <span class="set-label"><b>{{ _('Between rows') }}</b><small>{{ _('What tells one row from the next.') }}</small></span>
+          <select name="ui_rows" data-ui="rows">
+            <option value="lines" {% if ui.rows == 'lines' %}selected{% endif %}>{{ _('Divider lines') }}</option>
+            <option value="stripes" {% if ui.rows == 'stripes' %}selected{% endif %}>{{ _('Stripes') }}</option>
+            <option value="both" {% if ui.rows == 'both' %}selected{% endif %}>{{ _('Divider lines and stripes') }}</option>
+            <option value="none" {% if ui.rows == 'none' %}selected{% endif %}>{{ _('Neither') }}</option>
           </select>
         </label>
       </form>
 
       <div class="set-title">{{ _('Text') }}</div>
-      <form method="post" class="set-group" data-autosave-form>
+      <form method="post" class="set-group" data-autosave-form data-ui-form>
         <input type="hidden" name="action" value="profile">
         <label class="set-row">
           <span class="set-label"><b>{{ _('Font') }}</b><small>{{ _('Geist and Inter tell I, l and 1 apart and look the same on every computer. The system font is SF Pro on a Mac and Segoe UI on Windows.') }}</small></span>
-          <select name="ui_font" data-ui-font>
-            <option value="geist" {% if ui_font not in ('inter', 'system') %}selected{% endif %}>Geist</option>
-            <option value="inter" {% if ui_font == 'inter' %}selected{% endif %}>Inter</option>
-            <option value="system" {% if ui_font == 'system' %}selected{% endif %}>{{ _('System font') }}</option>
+          <select name="ui_font" data-ui="font" data-ui-font>
+            <option value="geist" {% if ui.font not in ('inter', 'system') %}selected{% endif %}>Geist</option>
+            <option value="inter" {% if ui.font == 'inter' %}selected{% endif %}>Inter</option>
+            <option value="system" {% if ui.font == 'system' %}selected{% endif %}>{{ _('System font') }}</option>
           </select>
         </label>
         <div class="set-row" data-text-size-row hidden>

@@ -344,11 +344,17 @@ app.register_blueprint(cloning_routes.bp)
 
 @app.route("/app-icon/<glyph>/<color>.svg")
 def app_icon(glyph: str, color: str):
-    """A picture and colour from Settings (app/appearance.py). Needs no
-    login: it is the same for everyone and says nothing about the lab."""
-    if glyph not in appearance.GLYPHS or color not in appearance.PALETTES:
+    """A picture and colour from Settings (app/appearance.py), on its colour.
+    Needs no login: it is the same for everyone and says nothing about the lab."""
+    return app_icon_on(glyph, color, appearance.DEFAULT_GROUND)
+
+
+@app.route("/app-icon/<glyph>/<color>/<ground>.svg")
+def app_icon_on(glyph: str, color: str, ground: str):
+    """The same on white or on black."""
+    if glyph not in appearance.GLYPHS or color not in appearance.PALETTES or ground not in appearance.GROUNDS:
         abort(404)
-    return Response(appearance.render(glyph, color), mimetype="image/svg+xml",
+    return Response(appearance.render(glyph, color, "app", ground), mimetype="image/svg+xml",
                     headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
@@ -568,21 +574,22 @@ def inject_user():
 
 @app.context_processor
 def inject_appearance():
-    """The person's app icon, and the accent colour that goes with it."""
+    """The person's app icon, the accent colour that goes with it, and the
+    rest of Settings → Appearance, which base.html marks on the page."""
     user = g.get("user")
-    glyph, color = appearance.DEFAULT_GLYPH, appearance.DEFAULT_COLOR
-    font, look = appearance.FONTS[0], appearance.LOOKS[0]
+    icon = (appearance.DEFAULT_GLYPH, appearance.DEFAULT_COLOR, appearance.DEFAULT_GROUND)
+    ui = {name: values[0] for name, values in appearance.CHOICES.items()}
     icon_url, lab_icon_name = "", ""
     if user is not None:
         from . import lab_icon as lab_icons
         with SessionLocal() as db_session:
-            glyph, color = appearance.get_choice(db_session, user.username)
-            font = appearance.get_font(db_session, user.username)
-            look = appearance.get_look(db_session, user.username)
+            icon = appearance.get_choice(db_session, user.username)
+            ui = appearance.get_all(db_session, user.username)
             # The lab's own icon (app/lab_icon.py) heads the sidebar when it has one.
             icon_url = lab_icons.url(db_session)
             lab_icon_name = lab.lab_name(db_session) if icon_url else ""
-    return {"app_icon_url": app_icon_url(glyph, color), "brand_css": appearance.brand_css(color), "ui_font": font, "ui_look": look,
+    return {"app_icon_url": app_icon_url(*icon), "brand_css": appearance.brand_css(icon[1]),
+            "ui": ui, "ui_font": ui["font"], "ui_look": ui["look"],
             "lab_icon_url": icon_url, "lab_icon_name": lab_icon_name}
 
 

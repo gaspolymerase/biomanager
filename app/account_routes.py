@@ -134,24 +134,33 @@ def settings():
                     user.default_landing = landing if landing in ALLOWED_LANDING_ENDPOINTS else ""
                 if "home_layout" in form:
                     home_layouts.set_layout(db_session, user.username, form.get("home_layout", ""))
-                if "ui_font" in form:
-                    appearance.set_font(db_session, user.username, form.get("ui_font", ""))
-                if "ui_look" in form:
-                    appearance.set_look(db_session, user.username, form.get("ui_look", ""))
+                # Settings → Appearance: mode, look, font, row height and lines.
+                for name in appearance.CHOICES:
+                    if f"ui_{name}" in form:
+                        appearance.set_value(db_session, user.username, name, form.get(f"ui_{name}", ""))
                 db_session.commit()
                 if request.headers.get("X-Autosave") == "1":
                     return jsonify({"ok": True})
                 flash(gettext("Profile updated."), "success")
             elif action == "appearance":
-                glyph, color = appearance.set_choice(db_session, user.username,
-                                                     request.form.get("glyph", ""), request.form.get("color", ""))
+                glyph, color, ground = appearance.set_choice(db_session, user.username, request.form.get("glyph", ""),
+                                                             request.form.get("color", ""), request.form.get("ground", ""))
                 db_session.commit()
                 if request.headers.get("X-Autosave") == "1":
                     # Picked in Settings and saved at once: the page swaps the
                     # icon and the accent in place.
-                    return jsonify({"ok": True, "icon": app_icon_url(glyph, color),
+                    return jsonify({"ok": True, "icon": app_icon_url(glyph, color, ground),
                                     "brand_css": appearance.brand_css(color)})
                 flash(gettext("App icon updated."), "success")
+            elif action == "theme":
+                # A theme sets the icon and every choice at once; the page
+                # comes back in it.
+                theme = appearance.apply_theme(db_session, user.username, request.form.get("theme", ""))
+                db_session.commit()
+                if request.headers.get("X-Autosave") == "1":
+                    return jsonify({"ok": theme is not None, "text_size": theme.text_size if theme else ""})
+                if theme is not None:
+                    flash(gettext("Theme applied."), "success")
             elif action == "language":
                 i18n.set_preference(db_session, user.username, request.form.get("language", ""))
                 db_session.commit()
@@ -188,7 +197,7 @@ def settings():
                     session["auth"] = security.session_stamp(user)
                     flash(gettext("Password updated. Any other signed-in sessions have been signed out."), "success")
             # Back to the pane the form was on (templates/settings.html).
-            pane = {"appearance": "appearance", "language": "appearance", "notifications": "notifications",
+            pane = {"appearance": "appearance", "theme": "appearance", "language": "appearance", "notifications": "notifications",
                     "password": "security"}.get(action, "profile")
             return redirect(url_for("settings", _anchor=pane))
         user_data = {
@@ -200,6 +209,7 @@ def settings():
             "default_landing": user.default_landing,
             "home_layout": home_layouts.get_layout(db_session, user.username),
             "app_icon": appearance.get_choice(db_session, user.username),
+            "ui": appearance.get_all(db_session, user.username),
             "language": i18n.preference(db_session, user.username),
             "role": user.role,
             "created_at": local_time(user.created_at).strftime("%Y-%m-%d") if user.created_at else "",
@@ -235,7 +245,12 @@ def settings():
         home_layout_choices=home_layouts.LAYOUTS,
         icon_glyphs={key: label for key, (label, _draw) in appearance.GLYPHS.items()},
         icon_palettes=appearance.PALETTES,
-        icon_urls={f"{g}/{c}": app_icon_url(g, c) for g in appearance.GLYPHS for c in appearance.PALETTES},
+        icon_grounds=appearance.GROUNDS,
+        icon_urls={f"{g}/{c}/{n}": app_icon_url(g, c, n)
+                   for g in appearance.GLYPHS for c in appearance.PALETTES for n in appearance.GROUNDS},
+        themes={key: (theme, appearance.theme_sketch(theme), app_icon_url(*theme.icon))
+                for key, theme in appearance.THEMES.items()},
+        current_theme=appearance.current_theme(user_data["ui"], user_data["app_icon"]),
         mail_configured=mailer.is_configured(),
         identities=identities,
         notification_categories=notify.SHOWN,

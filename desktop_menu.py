@@ -17,6 +17,7 @@ give the same destinations and Check for Updates.
 """
 from __future__ import annotations
 
+import base64
 import json
 import os
 import sys
@@ -104,6 +105,44 @@ class DesktopApi:
         AppHelper.callAfter(_set_zoom, self._TEXT_SIZES[name])
         return True
 
+    # Settings → Appearance → App icon: the Mac app's Dock shows the person's
+    # own icon while it runs. The page draws it, where the SVG's glass
+    # renders, and sends it as a PNG with the icon's address as its key;
+    # it is kept beside the preferences and shown again at the next start.
+    # An empty PNG puts back the app's own icon.
+    _DOCK_LIMIT = 4 * 1024 * 1024
+
+    def dock_icon(self):
+        """Tell the page the key of the icon in the Dock (window.bmDockIcon)."""
+        if sys.platform != "darwin":
+            return None
+        key = str(updates.load_prefs().get("dock_icon") or "")
+        from PyObjCTools import AppHelper
+        AppHelper.callAfter(_js, f"window.bmDockIcon && window.bmDockIcon({json.dumps(key)});")
+        return key
+
+    def set_dock_icon(self, png, key=""):
+        if sys.platform != "darwin" or not isinstance(png, str) or len(png) > self._DOCK_LIMIT:
+            return False
+        path = _dock_icon_path()
+        if png:
+            prefix = "data:image/png;base64,"
+            if not png.startswith(prefix):
+                return False
+            try:
+                data = base64.b64decode(png[len(prefix):], validate=True)
+            except ValueError:
+                return False
+            if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                return False
+            path.write_bytes(data)
+        else:
+            path.unlink(missing_ok=True)
+        updates.save_prefs(dock_icon=str(key)[:300] if png else "")
+        from PyObjCTools import AppHelper
+        AppHelper.callAfter(_apply_dock_icon)
+        return True
+
     def quit(self):
         """Close the app: Start a new lab sets the lab aside at the next start."""
         window = _state["window"]
@@ -124,6 +163,18 @@ def _js(code: str) -> None:
             view.evaluateJavaScript_completionHandler_(code, None)
             return
     threading.Thread(target=lambda: window.run_js(code), daemon=True).start()
+
+
+def _dock_icon_path():
+    return updates.prefs_dir() / "dock-icon.png"
+
+
+def _apply_dock_icon() -> None:
+    """The person's icon in the Dock, or the app's own when there is none."""
+    import AppKit
+    path = _dock_icon_path()
+    image = AppKit.NSImage.alloc().initWithContentsOfFile_(str(path)) if path.is_file() else None
+    AppKit.NSApplication.sharedApplication().setApplicationIconImage_(image)
 
 
 def _go(path: str) -> None:
@@ -590,6 +641,8 @@ def install_mac(window) -> None:
         threading.Timer(4, lambda: AppHelper.callAfter(_dump_menus, os.environ["BIOMANAGER_MENU_DUMP"])).start()
     prefs = updates.load_prefs()
     _set_appearance(prefs.get("appearance") or "system")
+    if _dock_icon_path().is_file():
+        _apply_dock_icon()
     if float(prefs.get("zoom") or 1.0) != 1.0:
         _set_zoom(float(prefs["zoom"]))
 

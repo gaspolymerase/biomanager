@@ -94,6 +94,7 @@
 /api/v1/vendors	api.vendors_list	GET
 /api/v1/vocabulary	api.vocabulary	GET
 /app-icon/<glyph>/<color>.svg	app_icon	GET
+/app-icon/<glyph>/<color>/<ground>.svg	app_icon_on	GET
 /ask	door.ask	GET POST
 /audit	audit_log_view	GET
 /auth/<key>/callback	oidc.callback	GET

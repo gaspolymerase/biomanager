@@ -1,10 +1,12 @@
-"""App icon and accent colour (app/appearance.py).
+"""Settings → Appearance (app/appearance.py).
 
-Each person picks a picture and a colour in Settings; it is saved at once and
-kept for them alone. The colour retints the app; Mint, the default, leaves the
-shipped accent alone."""
+Each person picks a picture, a colour and a background for the app icon, and
+a mode, look, font and rows; each is saved at once and kept for them alone.
+The colour retints the app; Jade, the default, leaves the shipped accent
+alone. A theme sets everything at once."""
 from __future__ import annotations
 
+import importlib.util
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -14,49 +16,78 @@ from tests.base import AppTestCase, client_for, make_user, uniq  # isort: skip
 
 from app import appearance  # noqa: E402
 
-STATIC_ICON = Path(__file__).resolve().parent.parent / "app" / "static" / "icon.svg"
+ROOT = Path(__file__).resolve().parent.parent
+STATIC_ICON = ROOT / "app" / "static" / "icon.svg"
 
 
 class DrawingTests(AppTestCase):
     def test_every_picture_in_every_colour_is_valid_svg(self):
         for glyph in appearance.GLYPHS:
             for color in appearance.PALETTES:
-                for variant in ("app", "full", "glyph", "background"):
-                    with self.subTest(glyph=glyph, color=color, variant=variant):
-                        root = ET.fromstring(appearance.render(glyph, color, variant))
-                        self.assertEqual(root.get("viewBox"), "0 0 1024 1024")
+                for ground in appearance.GROUNDS:
+                    for variant in ("app", "full", "glyph", "background"):
+                        with self.subTest(glyph=glyph, color=color, ground=ground, variant=variant):
+                            root = ET.fromstring(appearance.render(glyph, color, variant, ground))
+                            self.assertEqual(root.get("viewBox"), "0 0 1024 1024")
 
     def test_the_colour_reaches_the_drawing(self):
         self.assertIn(appearance.PALETTES["rose"].top, appearance.render("mouse", "rose"))
-        self.assertNotIn(appearance.PALETTES["rose"].top, appearance.render("mouse", "sky"))
+        self.assertNotIn(appearance.PALETTES["rose"].top, appearance.render("mouse", "ocean"))
 
-    def test_mint_keeps_the_shipped_accent(self):
-        self.assertEqual(appearance.brand_css("mint"), "")
-        css = appearance.brand_css("lavender")
-        self.assertIn("--color-brand-600:#7457DB;", css)
+    def test_on_white_and_black_the_picture_takes_the_colour(self):
+        pal = appearance.PALETTES["coral"]
+        on_colour = appearance.render("fly", "coral", "app", "color")
+        on_white = appearance.render("fly", "coral", "app", "light")
+        self.assertIn(f'stop-color="{pal.top}"', on_colour.split('id="bm-bg"')[1].split("</linearGradient>")[0])
+        self.assertIn('stop-color="#FFFFFF"', on_white.split('id="bm-bg"')[1].split("</linearGradient>")[0])
+        self.assertIn(f'stop-color="{pal.top}"', on_white.split('id="bm-w"')[1].split("</linearGradient>")[0])
+        self.assertIn('stop-color="#3B414D"', appearance.render("fly", "coral", "app", "dark"))
+
+    def test_no_painted_bevels(self):
+        # Apple's guidance for Liquid Glass icons: the system lights them;
+        # the drawing itself carries no lighting or inner shadows.
+        for glyph in appearance.GLYPHS:
+            svg = appearance.render(glyph, "jade")
+            self.assertNotIn("feSpecularLighting", svg)
+            self.assertNotIn("feDiffuseLighting", svg)
+
+    def test_jade_keeps_the_shipped_accent(self):
+        self.assertEqual(appearance.brand_css("jade"), "")
+        css = appearance.brand_css("indigo")
+        self.assertIn("--color-brand-600:#5A5BD8;", css)
         self.assertIn('prefers-color-scheme: dark', css)
         self.assertIn(':root[data-theme="dark"]', css)
 
     def test_the_static_icon_is_the_default_drawing(self):
         # scripts/build-app-icon.py writes it; rerun that after changing a drawing.
-        self.assertIn(appearance.render("helix", "mint").split("<defs>", 1)[1], STATIC_ICON.read_text())
+        self.assertIn(appearance.render("helix", "jade").split("<defs>", 1)[1], STATIC_ICON.read_text(encoding="utf-8"))
+
+    def test_the_forced_dark_stylesheet_is_current(self):
+        # scripts/theme-dark-css.py writes it; rerun that after changing a dark-mode rule.
+        spec = importlib.util.spec_from_file_location("theme_dark_css", ROOT / "scripts" / "theme-dark-css.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual(module.OUT.read_text(encoding="utf-8"), module.build())
+        self.assertIn(':root[data-theme="dark"] {', module.build())
 
 
 class ChoiceTests(AppTestCase):
     def setUp(self):
         super().setUp()
-        self.pick(self.m, "helix", "mint")
+        self.pick(self.m, "helix", "jade")
 
-    def pick(self, client, glyph, color):
-        return self.autosave(client, "/settings", {"action": "appearance", "glyph": glyph, "color": color})
+    def pick(self, client, glyph, color, ground="color"):
+        return self.autosave(client, "/settings", {"action": "appearance", "glyph": glyph, "color": color,
+                                                   "ground": ground})
 
-    def test_the_default_is_the_helix_in_mint(self):
+    def test_the_default_is_the_helix_in_jade(self):
         fresh = client_for(make_user(uniq("fresh")))
         html = self.get_ok(fresh, "/settings")
         self.assertIn('/static/icon.svg?v=', html)
         self.assertIn('<style id="brand-css"></style>', html)
         self.assertRegex(html, r'value="helix" checked')
-        self.assertRegex(html, r'value="mint" checked')
+        self.assertRegex(html, r'value="jade" checked')
+        self.assertRegex(html, r'value="color" checked')
 
     def test_picking_saves_at_once_and_answers_with_the_new_look(self):
         r = self.pick(self.m, "zebrafish", "rose")
@@ -64,28 +95,43 @@ class ChoiceTests(AppTestCase):
         body = r.get_json()
         self.assertTrue(body["ok"])
         self.assertIn("/app-icon/zebrafish/rose.svg?v=", body["icon"])
-        self.assertIn("--color-brand-600:#DC4478;", body["brand_css"])
+        self.assertIn("--color-brand-600:#D4477C;", body["brand_css"])
 
         html = self.get_ok(self.m, "/settings")
         self.assertIn('href="/app-icon/zebrafish/rose.svg?v=', html)
-        self.assertIn("--color-brand-600:#DC4478;", html)
+        self.assertIn("--color-brand-600:#D4477C;", html)
         self.assertRegex(html, r'value="zebrafish" checked')
 
+    def test_on_white_or_black(self):
+        body = self.pick(self.m, "petri", "amber", "dark").get_json()
+        self.assertIn("/app-icon/petri/amber/dark.svg?v=", body["icon"])
+        html = self.get_ok(self.m, "/settings")
+        self.assertIn('href="/app-icon/petri/amber/dark.svg?v=', html)
+        self.assertRegex(html, r'value="dark" checked')
+        # On its colour is the default, at the address it always had.
+        self.assertIn("/app-icon/petri/amber.svg?v=", self.pick(self.m, "petri", "amber", "color").get_json()["icon"])
+
+    def test_an_old_colour_becomes_the_nearest_new_one(self):
+        self.assertEqual(appearance.parse("worm/lavender"), ("worm", "indigo", "color"))
+        self.assertEqual(appearance.parse("fly/mint"), ("fly", "jade", "color"))
+        self.assertEqual(appearance.parse("fly/peach/light"), ("fly", "coral", "light"))
+        self.assertEqual(appearance.parse(""), ("helix", "jade", "color"))
+
     def test_the_choice_is_kept_per_person(self):
-        self.pick(self.m, "worm", "sky")
-        self.assertIn("/app-icon/worm/sky.svg", self.get_ok(self.m, "/home"))
-        self.assertNotIn("/app-icon/worm/sky.svg", self.get_ok(self.o, "/home"))
+        self.pick(self.m, "worm", "ocean")
+        self.assertIn("/app-icon/worm/ocean.svg", self.get_ok(self.m, "/home"))
+        self.assertNotIn("/app-icon/worm/ocean.svg", self.get_ok(self.o, "/home"))
 
     def test_unknown_values_fall_back_to_the_default(self):
-        self.pick(self.m, "unicorn", "tartan")
+        self.pick(self.m, "unicorn", "tartan", "plaid")
         html = self.get_ok(self.m, "/settings")
         self.assertIn('/static/icon.svg?v=', html)
         self.assertRegex(html, r'value="helix" checked')
 
     def test_a_plain_form_post_works_without_javascript(self):
-        r = self.post(self.m, "/settings", {"action": "appearance", "glyph": "fly", "color": "peach"})
+        r = self.post(self.m, "/settings", {"action": "appearance", "glyph": "fly", "color": "coral", "ground": "light"})
         self.assertFlash(r, "App icon updated")
-        self.assertIn("/app-icon/fly/peach.svg", r.get_data(as_text=True))
+        self.assertIn("/app-icon/fly/coral/light.svg", r.get_data(as_text=True))
 
 
 class FontTests(AppTestCase):
@@ -139,15 +185,83 @@ class LookTests(AppTestCase):
         self.assertNotIn('data-look=', self.get_ok(me, "/home"))
 
 
+class ChoiceRowTests(AppTestCase):
+    """Mode and the rows of a sheet: marked on the page, kept per person."""
+
+    def choose(self, client, **values):
+        return self.autosave(client, "/settings", {"action": "profile", **{f"ui_{k}": v for k, v in values.items()}})
+
+    def html_tag(self, client):
+        page = self.get_ok(client, "/home")
+        return page[page.index("<html"):page.index(">", page.index("<html"))]
+
+    def test_defaults_leave_the_page_unmarked(self):
+        tag = self.html_tag(client_for(make_user(uniq("plain"))))
+        for attr in ("data-theme", "data-density", "data-rows"):
+            self.assertNotIn(attr, tag)
+
+    def test_each_choice_is_marked_and_kept_per_person(self):
+        me = client_for(make_user(uniq("rows")))
+        self.choose(me, mode="dark", density="compact", rows="both")
+        tag = self.html_tag(me)
+        self.assertIn('data-theme="dark"', tag)
+        self.assertIn('data-density="compact"', tag)
+        self.assertIn('data-rows="both"', tag)
+        self.assertNotIn("data-theme", self.html_tag(client_for(make_user(uniq("other")))))
+        self.choose(me, mode="auto", density="roomy", rows="lines")
+        self.assertNotIn("data-", self.html_tag(me).replace("data-font", "").replace("data-look", ""))
+
+    def test_unknown_values_fall_back(self):
+        me = client_for(make_user(uniq("oddrows")))
+        self.choose(me, mode="sepia", density="tiny", rows="tartan")
+        tag = self.html_tag(me)
+        for attr in ("data-theme", "data-density", "data-rows"):
+            self.assertNotIn(attr, tag)
+
+
+class ThemeTests(AppTestCase):
+    """A theme sets the icon and every choice at once."""
+
+    def test_a_theme_sets_everything(self):
+        me = client_for(make_user(uniq("night")))
+        body = self.autosave(me, "/settings", {"action": "theme", "theme": "bench"}).get_json()
+        self.assertEqual(body, {"ok": True, "text_size": "larger"})
+        page = self.get_ok(me, "/settings")
+        tag = page[page.index("<html"):page.index(">", page.index("<html"))]
+        self.assertIn('data-look="solid"', tag)
+        self.assertIn('data-font="system"', tag)
+        self.assertIn('data-density="compact"', tag)
+        self.assertIn('data-rows="both"', tag)
+        self.assertIn('href="/app-icon/microtube/coral.svg?v=', page)
+        self.assertRegex(page, r'class="theme-card is-current"\s+data-theme-name="bench"')
+
+    def test_changing_anything_after_makes_it_your_own(self):
+        me = client_for(make_user(uniq("mine")))
+        self.autosave(me, "/settings", {"action": "theme", "theme": "night"})
+        self.assertIn("is-current", self.get_ok(me, "/settings"))
+        self.autosave(me, "/settings", {"action": "profile", "ui_rows": "stripes"})
+        self.assertNotIn("theme-card is-current", self.get_ok(me, "/settings"))
+
+    def test_the_default_matches_the_glass_theme(self):
+        page = self.get_ok(client_for(make_user(uniq("fresh"))), "/settings")
+        self.assertRegex(page, r'class="theme-card is-current"\s+data-theme-name="glass"')
+
+    def test_an_unknown_theme_changes_nothing(self):
+        me = client_for(make_user(uniq("nothing")))
+        self.assertEqual(self.autosave(me, "/settings", {"action": "theme", "theme": "disco"}).get_json()["ok"], False)
+
+
 class IconRouteTests(AppTestCase):
     def test_serves_an_svg_without_signing_in(self):
         client = self.m.application.test_client()
-        r = client.get("/app-icon/petri/lemon.svg")
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.mimetype, "image/svg+xml")
-        self.assertIn("immutable", r.headers["Cache-Control"])
-        ET.fromstring(r.get_data(as_text=True))
+        for path in ("/app-icon/petri/amber.svg", "/app-icon/petri/amber/light.svg"):
+            r = client.get(path)
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(r.mimetype, "image/svg+xml")
+            self.assertIn("immutable", r.headers["Cache-Control"])
+            ET.fromstring(r.get_data(as_text=True))
 
-    def test_unknown_pictures_and_colours_are_not_found(self):
-        self.assertEqual(self.m.get("/app-icon/unicorn/mint.svg").status_code, 404)
+    def test_unknown_pictures_colours_and_backgrounds_are_not_found(self):
+        self.assertEqual(self.m.get("/app-icon/unicorn/jade.svg").status_code, 404)
         self.assertEqual(self.m.get("/app-icon/helix/tartan.svg").status_code, 404)
+        self.assertEqual(self.m.get("/app-icon/helix/jade/plaid.svg").status_code, 404)
