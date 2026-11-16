@@ -571,5 +571,13 @@
   "%(n)s steps": "%(n)s 个步骤",
   "New timeline": "新时间线",
   "1 component": "1 种成分",
-  "%(n)s components": "%(n)s 种成分"
+  "%(n)s components": "%(n)s 种成分",
+  "Cite paper": "引用文献",
+  "Author and year, e.g. (Wang et al., 2024)": "作者和年份，如 (Wang et al., 2024)",
+  "Cite a paper": "引用一篇文献",
+  "Search papers by title, author or journal": "按标题、作者或期刊搜索文献",
+  "Search papers": "搜索文献",
+  "No paper matches.": "没有匹配的文献。",
+  "No papers yet. Add them in Reading, or bring them in from Zotero there.": "还没有文献。请在“文献”中添加，或在那里从 Zotero 导入。",
+  "Papers could not be loaded.": "无法加载文献。"
 }

@@ -435,6 +435,23 @@ class ReadingTests(Notebook):
         self.assertIn(page, [x["id"] for x in found])
         self.assertEqual(next(x for x in found if x["id"] == page)["cover"], picture)
 
+    def test_a_citation_reads_the_papers_authors_and_year(self):
+        """/cite (frontend/src/cite.js): the paper picker finds reading notes
+        with their authors and year, a citation keeps them current from the
+        titles, and the cited paper lists the page under "Linked from"."""
+        paper = self.new_page(self.m, kind="reading", title=uniq("Orientation maps"), properties=[
+            {"key": "authors", "value": "Xiaoming Wang; Hua Li; Zhen Chen"}, {"key": "year", "value": "2024"}])
+        note = self.new_page(self.m, kind="note", title=uniq("Plan"))
+        found = self.m.get("/notebook/api/search?kind=reading&q=Wang").get_json()["results"]
+        self.assertEqual([x["id"] for x in found], [paper])
+        self.assertEqual(found[0]["fields"], {"authors": "Xiaoming Wang; Hua Li; Zhen Chen", "year": "2024"})
+        pages = self.m.get(f"/notebook/api/pages/titles?ids={paper},{note}").get_json()["pages"]
+        self.assertEqual(pages[str(paper)]["fields"], {"authors": "Xiaoming Wang; Hua Li; Zhen Chen", "year": "2024"})
+        self.assertNotIn("fields", pages[str(note)])   # only a paper is cited
+        self.save(self.m, note, body=f"As shown before [(Wang et al., 2024)](/notebook?page={paper}&cite=1).")
+        linked = self.m.get(f"/notebook/api/pages/{paper}/linked-from").get_json()["pages"]
+        self.assertEqual([p["id"] for p in linked], [note])
+
     def test_reading_lists_papers_and_talks_the_person_may_open(self):
         mine = self.new_page(self.m, starter="seminar")
         theirs = self.new_page(client_for(make_user()), kind="reading", title=uniq("not shared"))

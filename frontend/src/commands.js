@@ -7,7 +7,7 @@ import { defaultSheet } from './blocks/sheet.js';
 import { stampTime } from './docops.js';
 import { timers } from './timers.js';
 import { api, ask, escapeHtml, isoDate, tr } from './util.js';
-import { addSubPage, openColorMenu, openDatePicker, openPagePicker, openReminder, turnIntoPage } from './rich-menus.js';
+import { addSubPage, openCitePicker, openColorMenu, openDatePicker, openPagePicker, openReminder, turnIntoPage } from './rich-menus.js';
 
 export const SYMBOLS = [
   ['μ', 'micro'], ['°', 'degree'], ['℃', 'celsius'], ['±', 'plus-minus'], ['×', 'times'],
@@ -107,6 +107,8 @@ export const ITEMS = [
   // Pages in pages, as Notion makes them: /page is a new page inside this one; or link one that exists ([[ too).
   { id: 'page', group: 'Basic', icon: 'page', label: 'Page', hint: 'A new page inside this one', keywords: 'page subpage sub-page new child nested 页面 子页面 新页面', run: (e) => addSubPage(e) },
   { id: 'page-link', group: 'Basic', icon: 'link', label: 'Link to page', hint: 'A page that exists (or type [[)', keywords: 'page link existing notebook mention reference 页面 链接 引用', run: (e) => openPagePicker(e) },
+  // A paper from Reading cited as papers cite it, "(Wang et al., 2024)", linked to its note.
+  { id: 'cite', group: 'Basic', icon: 'quote', label: 'Cite paper', hint: 'Author and year, e.g. (Wang et al., 2024)', keywords: 'cite citation reference paper zotero author year bibliography 引用 文献 参考文献 论文 作者 年份', run: (e) => openCitePicker(e) },
   { id: 'page-turn', group: 'Basic', icon: 'page', label: 'Turn into page', hint: 'This line becomes a page inside this one', keywords: 'page turn into convert subpage 页面 转换 子页面', run: (e) => turnIntoPage(e) },
   { id: 'toc', group: 'Basic', icon: 'toc', label: 'Table of contents', hint: 'This page’s headings, kept up to date', keywords: 'toc contents outline headings 目录 大纲', run: (e) => e.chain().focus().insertLabBlock('toc').run() },
 
