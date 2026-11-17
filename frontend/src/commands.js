@@ -8,6 +8,7 @@ import { stampTime } from './docops.js';
 import { timers } from './timers.js';
 import { api, ask, escapeHtml, isoDate, tr } from './util.js';
 import { addSubPage, openColorMenu, openDatePicker, openPagePicker, openReminder, turnIntoPage } from './rich-menus.js';
+import { openCitePicker } from './extensions/Citation.js';
 
 export const SYMBOLS = [
   ['μ', 'micro'], ['°', 'degree'], ['℃', 'celsius'], ['±', 'plus-minus'], ['×', 'times'],
@@ -109,6 +110,8 @@ export const ITEMS = [
   { id: 'page-link', group: 'Basic', icon: 'link', label: 'Link to page', hint: 'A page that exists (or type [[)', keywords: 'page link existing notebook mention reference 页面 链接 引用', run: (e) => openPagePicker(e) },
   { id: 'page-turn', group: 'Basic', icon: 'page', label: 'Turn into page', hint: 'This line becomes a page inside this one', keywords: 'page turn into convert subpage 页面 转换 子页面', run: (e) => turnIntoPage(e) },
   { id: 'toc', group: 'Basic', icon: 'toc', label: 'Table of contents', hint: 'This page’s headings, kept up to date', keywords: 'toc contents outline headings 目录 大纲', run: (e) => e.chain().focus().insertLabBlock('toc').run() },
+  { id: 'cite', group: 'Basic', icon: 'book', label: 'Cite a paper', hint: '(Author et al., Year), linked to its paper note', keywords: 'cite citation reference paper literature zotero 引用 文献 参考', run: (e) => openCitePicker(e) },
+  { id: 'references', group: 'Basic', icon: 'list', label: 'References', hint: 'Every paper this page cites, kept up to date', keywords: 'references bibliography citations 参考文献 引用', run: (e) => e.chain().focus().insertLabBlock('references').run() },
 
   // ---- Data
   { id: 'sheet', group: 'Data', icon: 'table', label: 'Data sheet', hint: 'Enter data; plot it; t-test / ANOVA', keywords: 'table spreadsheet plot chart graph stats', run: block('sheet') },

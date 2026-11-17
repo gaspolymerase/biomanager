@@ -29,6 +29,7 @@ import { CommentHighlights } from './extensions/CommentHighlights.js';
 import { RichBlocks } from './extensions/RichBlocks.js';
 import { PeopleChips } from './extensions/PeopleChips.js';
 import { PageLink } from './extensions/PageLinks.js';
+import { Citation } from './extensions/Citation.js';
 import { LabBlock } from './blocks/index.js';
 import { mountRecipe } from './blocks/recipe.js';
 import { StepTimers, timers } from './timers.js';
@@ -69,6 +70,8 @@ function extensionsFor({ provider, user, onCommentOpen, pageId }) {
     // Links open in a BioManager tab or the browser (extensions/PageLinks.js).
     Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer', target: null } }),
     PageLink.configure({ pageId }),
+    // A paper cited (Smith et al., 2024), linked to its note (extensions/Citation.js).
+    Citation,
     Image.configure({ allowBase64: false }),
     TaskList,
     TaskItem.configure({ nested: true }),

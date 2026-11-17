@@ -880,7 +880,9 @@ def linked_from(session, page_id: int) -> list[dict]:
     stmt = accessible_filter(select(NotebookPage.id, NotebookPage.title, NotebookTab.owner_username)
                              .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
                              .where(NotebookPage.id != page_id,
-                                    NotebookPage.body.like(page_link_pattern(page_id))))
+                                    or_(NotebookPage.body.like(page_link_pattern(page_id)),
+                                        # a paper cited there: (Smith et al., 2024)
+                                        NotebookPage.body.like(f"%/notebook?page={int(page_id)}&cite=1)%"))))
     rows = session.execute(stmt.order_by(NotebookPage.updated_at.desc()).limit(50)).all()
     names = display_names(session, [r.owner_username for r in rows])
     return [{"id": r.id, "title": r.title or "Untitled page", "owner_name": names.get(r.owner_username, r.owner_username),
@@ -2225,7 +2227,37 @@ def page_titles():
                 continue
             info = info_for(s, page.id)
             out[str(page.id)] = {"title": page.title or "Untitled page", "kind": info.kind if info else "note"}
+            if info and info.kind == "reading":
+                # A paper cited in a page: (Smith et al., 2024), and its line in References.
+                out[str(page.id)].update(citing(page))
         return jsonify({"ok": True, "pages": out})
+
+
+def citing(page: NotebookPage) -> dict:
+    """How a paper note is cited: its short form and its reference."""
+    props = property_map(page.properties)
+    return {"cite": citations.short_cite(props.get("authors", ""), props.get("year", ""), page.title or ""),
+            "ref": citations.reference(props, page.title or "")}
+
+
+@bp.get("/api/cite-search")
+def cite_search():
+    """For Cite a paper: the paper notes this person may open whose title,
+    authors, year, journal or DOI has what is typed, newest first."""
+    q = " ".join(str(request.args.get("q") or "").split()).lower()[:120]
+    with SessionLocal() as s:
+        stmt = accessible_filter(
+            select(NotebookPage)
+            .join(NotebookTab, NotebookPage.tab_id_fk == NotebookTab.id)
+            .join(NotebookPageInfo, NotebookPageInfo.page_id_fk == NotebookPage.id)
+            .where(NotebookPageInfo.kind == "reading"))
+        if q:
+            pattern = f"%{q}%"
+            stmt = stmt.where(or_(func.lower(NotebookPage.title).like(pattern),
+                                  func.lower(NotebookPage.properties).like(pattern)))
+        pages = s.scalars(stmt.order_by(NotebookPage.updated_at.desc()).limit(12)).all()
+        return jsonify({"ok": True, "papers": [{"id": p.id, "title": p.title or "Untitled page", **citing(p)}
+                                               for p in pages]})
 
 
 @bp.get("/api/people")

@@ -186,3 +186,112 @@ def read(text: str, lookup=None) -> dict:
         elif re.match(r"https?://", text) and "\n" not in text:
             fields.setdefault("url", text)
     return {k: v for k, v in fields.items() if v}
+
+
+# ------------------------------------------------------------------ citing
+
+CJK = re.compile(r"[\u3400-\u9fff\uf900-\ufaff]")
+PARTICLES = {"van", "von", "de", "der", "den", "del", "della", "di", "da", "du", "dos", "das",
+             "le", "la", "ten", "ter", "zu", "af", "bin", "al", "van't"}
+SUFFIX = re.compile(r"^(?:jr|sr|ii|iii|iv|v)\.?$", re.I)
+INITIALS = re.compile(r"^(?:[A-Z]\.?-?){1,3}$")
+NOT_A_NAME = re.compile(r"^(?:…|\.\.\.|et\.? al\.?|others)$", re.I)
+
+
+def _listing(part: str) -> list[str]:
+    """"Wang X, Li Y" lists people; "Wang, Xiaoming" is one person."""
+    pieces = part.split(",")
+    return pieces if len(pieces) > 1 and all(" " in p.strip() for p in pieces) else [part]
+
+
+def split_authors(authors) -> list[str]:
+    """The people named in an Authors field, in order: as the app keeps them,
+    "Xiaoming Wang; Hua Li", or as people type them, "Wang X, Li Y",
+    "Wang, Xiaoming", "Wang and Li"."""
+    text = " ".join(str(authors or "").split())
+    if not text:
+        return []
+    if ";" in text:
+        names = text.split(";")
+    else:
+        names = re.split(r"\s*(?:,\s*)?\band\b\s*|\s*&\s*|、|，", text)
+        names = _listing(text) if len(names) == 1 else [n for part in names for n in _listing(part)]
+    names = [n.strip().rstrip(",") for n in names]
+    return [n for n in names if n and not NOT_A_NAME.match(n)]
+
+
+def surname(name) -> str:
+    """The name a citation gives one author: "Jane Smith", "Smith, Jane" and
+    "Smith J" are Smith, "Ludwig van Beethoven" is van Beethoven, and a
+    Chinese name is written whole, family name first (Zotero gives "小明 王")."""
+    text = " ".join(str(name or "").split())
+    if not text:
+        return ""
+    if CJK.search(text):
+        if "," in text:
+            family, given = (s.strip() for s in text.split(",", 1))
+            return family + (given if CJK.search(given) else "")
+        words = text.split(" ")
+        return words[-1] + "".join(words[:-1]) if len(words) > 1 else text
+    if "," in text:
+        family = text.split(",", 1)[0].strip()
+        if family and not SUFFIX.match(family):
+            return family
+    words = [w for w in text.split(" ") if not SUFFIX.match(w.rstrip(","))]
+    if len(words) == 1:
+        return words[0]
+    if INITIALS.match(words[-1]) and not INITIALS.match(words[0]):
+        return " ".join(w for w in words[:-1] if not INITIALS.match(w))
+    at = len(words) - 1
+    while at > 1 and words[at - 1].lower() in PARTICLES:
+        at -= 1
+    if at == 1 and words[0].lower() in PARTICLES and len(words) > 2:
+        at = 0
+    return " ".join(words[at:])
+
+
+def cite_year(year) -> str:
+    found = re.search(r"\d{4}", str(year or ""))
+    return found.group(0) if found else "n.d."
+
+
+def _short_title(title) -> str:
+    title = " ".join(str(title or "").split())
+    if not title:
+        return "Untitled page"
+    if CJK.search(title):
+        return f"{title[:15].strip()}…" if len(title) > 16 else title
+    words = title.split(" ")
+    return " ".join(words[:4]) + "…" if len(words) > 4 else title
+
+
+def short_cite(authors, year="", title="") -> str:
+    """How a paper is cited in a sentence: Smith, 2024; Smith & Lee, 2024;
+    Smith et al., 2024; a Chinese first author whole, 王小明 等, 2024. No year
+    is n.d.; no authors, the start of its title."""
+    names = [n for n in (surname(a) for a in split_authors(authors)) if n]
+    year = cite_year(year)
+    if not names:
+        return f"{_short_title(title)}, {year}"
+    first = names[0]
+    if len(names) == 1:
+        return f"{first}, {year}"
+    if CJK.search(first):
+        return f"{first} 等, {year}"
+    if len(names) == 2:
+        return f"{first} & {names[1]}, {year}"
+    return f"{first} et al., {year}"
+
+
+def reference(fields: dict, title: str = "") -> str:
+    """A paper as a reference list writes it: Authors (Year). Title. Journal.
+    https://doi.org/…"""
+    authors = str(fields.get("authors") or "").replace("; ", ", ")
+    year = str(fields.get("year") or "").strip()
+    head = f"{authors} ({year})." if authors and year else (f"{authors}." if authors else (f"({year})." if year else ""))
+    doi = str(fields.get("doi") or "").strip()
+    link = f"https://doi.org/{doi}" if doi else str(fields.get("url") or "").strip()
+    parts = [head, f"{title.strip().rstrip('.')}." if title and title.strip() else "",
+             f"{str(fields.get('journal') or '').strip().rstrip('.')}." if fields.get("journal") else "", link]
+    return " ".join(p for p in parts if p)
+

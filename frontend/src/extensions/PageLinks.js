@@ -87,7 +87,8 @@ export const PageLink = Node.create({
 
   // Above the link mark, so a link to a page reads as one of these.
   parseHTML() {
-    return [{ tag: 'a[href]', priority: 1000, getAttrs: (el) => (HREF.test(el.getAttribute('href') || '') ? null : false) }];
+    // A cited paper (…&cite=1) is a Citation (extensions/Citation.js), not this.
+    return [{ tag: 'a[href]', priority: 1000, getAttrs: (el) => (HREF.test(el.getAttribute('href') || '') && !/&cite=1$/.test(el.getAttribute('href') || '') ? null : false) }];
   },
 
   renderHTML({ node, HTMLAttributes }) {
@@ -213,7 +214,7 @@ export const PageLink = Node.create({
           handleDOMEvents: {
             click: (view, event) => {
               const a = event.target.closest && event.target.closest('a[href]');
-              if (!a || event.defaultPrevented || a.classList.contains('nb-pagelink') || event.button !== 0) return false;
+              if (!a || event.defaultPrevented || a.classList.contains('nb-pagelink') || a.classList.contains('nb-cite') || event.button !== 0) return false;
               const href = a.getAttribute('href') || '';
               if (!href || href.startsWith('#')) return false;
               let url;

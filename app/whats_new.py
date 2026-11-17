@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.11.0": {
+        "new": [
+            "Cite a paper in a notebook page with `[@` or `/cite`: (Smith et al., 2024), linked to its note in Reading; **References** lists the papers a page cites.",
+        ],
+    },
     "2.10.6": {
         "changed": [
             "The loading animation comes sooner: a page or proposal that takes more than half a second shows it, not only one that takes more than a second.",

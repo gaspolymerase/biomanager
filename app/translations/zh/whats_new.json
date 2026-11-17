@@ -257,5 +257,6 @@
   "**Spending** counts an order in the month it was ordered; admins are told when someone passes a limit.": "**花费** 按订购的月份计入订单；有人超出限额时会通知管理员。",
   "A new mouse's form has **Add another after this**: save, and the form stays open for the next mouse with its strain and cage kept.": "新建小鼠的表单多了 **保存后再加一只**：保存后表单不关，品系和笼子都留着，直接填下一只。",
   "Numbers line up on the right in every sheet: an age, a count, a quantity.": "每张表里的数字都靠右对齐：年龄、只数、数量。",
-  "Picking one of **Set field**'s choices no longer closes its panel.": "在 **设置字段** 里点选项，面板不会再被关掉。"
+  "Picking one of **Set field**'s choices no longer closes its panel.": "在 **设置字段** 里点选项，面板不会再被关掉。",
+  "Cite a paper in a notebook page with `[@` or `/cite`: (Smith et al., 2024), linked to its note in Reading; **References** lists the papers a page cites.": "在记录本页面里用 `[@` 或 `/cite` 引用文献：(Smith et al., 2024)，链接到 **文献** 里的论文笔记；**参考文献** 列出页面引用的所有文献。"
 }

@@ -2995,6 +2995,23 @@ whose body contains `/notebook?page=<id>)`. Every link in a page opens with
 the text) or in the browser (other sites). On `pagehide` the sync provider
 also sends updates not yet pushed (`_sendOnLeave`, a keepalive request).
 
+**Citations.** A paper cited in a sentence is a `citation` inline atom
+(`frontend/src/extensions/Citation.js`), kept in the Markdown as
+`[(Smith et al., 2024)](/notebook?page=12&cite=1)`; its parse rule sits
+above `pageLink`'s, which leaves `&cite=1` links alone. The words come
+from the paper note's properties (`lab_notebook.citing()`, using
+`citations.short_cite()`, which reads authors as the app keeps them or
+as people type them, `split_authors()` and `surname()`, and
+`citations.reference()`), which
+`/notebook/api/pages/titles` adds as `cite` and `ref` for a Reading note;
+like a page link, the node writes the current words back into the
+Markdown. `[@` and `/cite` open `openCitePicker`, which searches
+`/notebook/api/cite-search?q=` (Reading notes the person can open, by
+title, authors, year, journal or DOI, newest first, 12 at most). A
+` ```references` block (`frontend/src/blocks/references.js`) lists the
+page's citations in order of first use. `linked-from` also counts a page
+that cites the note.
+
 **Templates.** A name the person already uses answers 409 `exists`, and
 the page asks before sending `replace=1`, which saves over it.
 `Save as template` posts `from_page_id`, and with

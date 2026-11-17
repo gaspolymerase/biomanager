@@ -324,6 +324,7 @@
 /notebook/<any(protocols, recipes, meetings, reading):library>	notebook_library	GET
 /notebook/api/chemicals	nb.chemicals	GET
 /notebook/api/cite	nb.cite	POST
+/notebook/api/cite-search	nb.cite_search	GET
 /notebook/api/comments/<int:comment_id>/delete	nb.comment_delete	POST
 /notebook/api/comments/<int:comment_id>/edit	nb.comment_edit	POST
 /notebook/api/comments/<int:comment_id>/resolve	nb.comment_resolve	POST
