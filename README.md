@@ -824,6 +824,12 @@ database has a name of its own (one another database has is refused), so
     talk you can open as cards with their covers, or as every picture in
     them, to find a paper by a figure you remember; search reads titles,
     authors, journals, DOIs, tags and picture captions.
+  - **Cite a paper** in any page with `[@` or `/cite`: it goes in as
+    *(Schultz et al., 1997)*, from the paper note's authors and year (a Chinese
+    name whole, *(王小明 等, 2024)*), and
+    opens the note when clicked; the note lists the pages citing it.
+    `/references` adds a **References** block listing every paper the page
+    cites, kept up to date.
   - **Paper notes straight from Zotero**: **Zotero** on the Reading page
     takes a read-only API key from zotero.org, then which library (yours
     or a lab group's), which collection (or all of it) and which topic.

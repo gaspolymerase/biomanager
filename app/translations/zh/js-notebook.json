@@ -571,5 +571,15 @@
   "%(n)s steps": "%(n)s 个步骤",
   "New timeline": "新时间线",
   "1 component": "1 种成分",
-  "%(n)s components": "%(n)s 种成分"
+  "%(n)s components": "%(n)s 种成分",
+  "Cite a paper": "引用文献",
+  "(Author et al., Year), linked to its paper note": "（作者 et al., 年份），链接到它的论文笔记",
+  "References": "参考文献",
+  "Every paper this page cites, kept up to date": "本页引用的所有文献，自动更新",
+  "Title, author, year, journal or DOI": "标题、作者、年份、期刊或 DOI",
+  "Find a paper": "查找文献",
+  "No paper note matches. Papers come from Reading: a Paper notes page, or Zotero.": "没有匹配的论文笔记。文献来自“文献”：论文笔记页面，或 Zotero。",
+  "Papers could not be loaded.": "文献没能载入。",
+  "A paper note you cannot open, or one that was deleted": "你无法打开或已删除的论文笔记",
+  "Papers you cite on this page with /cite or [@ are listed here.": "在本页用 /cite 或 [@ 引用的文献会列在这里。"
 }

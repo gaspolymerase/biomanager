@@ -777,15 +777,31 @@ NOTEBOOK = (
         ("Cutting solution", "protocol", "- [ ] 93 mM NMDG\n- [ ] 2.5 mM KCl\n- [ ] 1.2 mM NaH2PO4\n- [ ] 30 mM NaHCO3"),
     )),
     ("Reading", "emoji:📚", (
-        ("Dopamine and reward prediction", "reading", "Notes on the paper: phasic dopamine encodes the error, not the reward."),
+        ("A neural substrate of prediction and reward", "reading",
+         "Notes on the paper: phasic dopamine encodes the error, not the reward."),
     )),
 )
+# The paper note's details, so a page can cite it: (Schultz et al., 1997).
+PAPER_FIELDS = [{"key": "authors", "value": "Wolfram Schultz; Peter Dayan; P. Read Montague"},
+                {"key": "year", "value": "1997"}, {"key": "journal", "value": "Science"},
+                {"key": "doi", "value": "10.1126/science.275.5306.1593"}]
 for topic, icon, pages in NOTEBOOK:
     tab_id = alex.post("/notebook/tabs/create", data={"title": topic}).get_json()["id"]
     alex.post(f"/notebook/api/topics/{tab_id}", json={"icon": icon})
     for title, kind, body in pages:
-        page_id = alex.post("/notebook/api/pages/new", json={"tab_id": tab_id, "title": title, "kind": kind}).get_json()["page_id"]
+        page_id = alex.post("/notebook/api/pages/new", json={"tab_id": tab_id, "title": title, "kind": kind,
+                                                             **({"properties": PAPER_FIELDS} if kind == "reading" else {})}
+                            ).get_json()["page_id"]
         alex.post(f"/notebook/pages/{page_id}/update", data={"body": body})
+        if kind == "reading":
+            paper_page = page_id
+# A page citing the paper, with its References.
+tab_id = one("select id from notebook_tabs where title='Fiber photometry'")
+if tab_id:
+    cited = alex.post("/notebook/api/pages/new", json={"tab_id": tab_id, "title": "Why reward omission dips"}).get_json()["page_id"]
+    alex.post(f"/notebook/pages/{cited}/update", data={"body": (
+        "Omitted sucrose gave a dip below baseline in every mouse, as a reward prediction error predicts "
+        f"[(Schultz et al., 1997)](/notebook?page={paper_page}&cite=1).\n\n## References\n\n```references\n```\n")})
 
 sam.post("/notebook/tabs/create", data={"title": "Photometry"})
 tab = one("select id from notebook_tabs order by id desc limit 1")

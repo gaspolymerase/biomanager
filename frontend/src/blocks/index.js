@@ -27,6 +27,7 @@ import { mountQpcr, defaultQpcr } from './qpcr.js';
 import { mountDiagram, defaultDiagram } from './diagram.js';
 import { mountExperiment, defaultExperiment } from './experiment.js';
 import { mountToc } from './toc.js';
+import { mountReferences } from './references.js';
 
 export const BLOCKS = {
   sheet: { label: 'Data sheet', json: true, mount: mountSheet, make: defaultSheet },
@@ -40,6 +41,7 @@ export const BLOCKS = {
   mindmap: { label: 'Mind map', json: false, mount: mountDiagram, make: () => defaultDiagram('mindmap') },
   math: { label: 'Equation', json: false, mount: mountDiagram, make: () => defaultDiagram('math') },
   toc: { label: 'Contents', json: false, mount: mountToc, make: () => '' },
+  references: { label: 'References', json: false, mount: mountReferences, make: () => '' },
 };
 
 export { CALC_TYPES };
