@@ -33,6 +33,10 @@ NOTES: dict[str, dict[str, list[str]]] = {
     "2.11.0": {
         "new": [
             "Cite a paper in a notebook page with `[@` or `/cite`: (Smith et al., 2024), linked to its note in Reading; **References** lists the papers a page cites.",
+            "Choose a theme, app icon, light or dark, and how rows look in **Settings → Appearance & language**; the Mac app's Dock shows your icon.",
+        ],
+        "changed": [
+            "BioManager's icon is a DNA helix in jade green.",
         ],
     },
     "2.10.6": {
