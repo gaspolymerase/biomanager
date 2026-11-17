@@ -164,6 +164,9 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
     const id = form.id.replace('inv-', '');
     applyRow(id, body);
     if (body.offer_stock) offerStock(id);
+    // What the save has to say: a spending limit passed, a primer the lab already has.
+    const say = window.BiomanagerShell && window.BiomanagerShell.toast;
+    if (say) (body.notes || []).forEach((note) => say(note, 'danger'));
   });
 
   // A grid move changes the box and position of the item (and of the one

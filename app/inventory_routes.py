@@ -30,7 +30,7 @@ from flask import (
 )
 from sqlalchemy import select
 
-from . import access, audit, cell_text, database_keys, i18n, plain_records, positions, rack_layout
+from . import access, audit, cell_text, database_keys, i18n, plain_records, positions, primer_records, rack_layout
 from . import inventory as presets
 from . import inventory_service as svc
 from .db import SessionLocal
@@ -966,6 +966,7 @@ def save_item(key: str):
             session.add(item)
         status_was = "" if creating else item.status
         cost_was = None if creating else _cost_of(session, row, item)
+        sequence_was = "" if creating else svc.clean_sequence(item.attrs_dict.get("sequence"))
         try:
             error, notes = _item_from_form(session, mv, item, request.form, creating=creating)
         except Refused as refused:
@@ -990,6 +991,8 @@ def save_item(key: str):
                 order.attrs = json.dumps(order_attrs)
         session.commit()
         notes += _limit_notes(session, row, item, cost_was, creating)
+        if not _wants_json():
+            notes += _same_sequence_notes(session, row, item, sequence_was)
         label = item.name or f"#{item.number}"
         for note in notes:
             flash(note, "warning")
@@ -1003,6 +1006,31 @@ MAX_AT_ONCE = 50
 
 # Fields a batch of new items does not copy from the dialog as they are.
 MANY_ONLY = ("id", "count", "names", "rack_id", "position")
+
+
+def _same_sequence_notes(session, row: InventoryModule, item: InventoryItem, sequence_was: str) -> list[str]:
+    """A primer given a sequence the lab already had made (#163): said, not
+    refused, so nobody orders it twice by mistake."""
+    if row.kind != "primers":
+        return []
+    sequence = svc.clean_sequence(item.attrs_dict.get("sequence"))
+    if sequence == sequence_was:
+        return []
+    twins = primer_records.same_sequence(session, sequence, exclude_ids=[item.id])
+    return [primer_records.same_sequence_note(twins)] if twins else []
+
+
+@bp.route("/<key>/primers/same-sequence")
+def same_sequence(key: str):
+    """The lab's primers with the sequence being typed (#163), for the hint
+    under Sequence in a primer's dialog and Add primer pair."""
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if row.kind != "primers":
+            abort(404)
+        found = primer_records.same_sequence(session, request.args.get("sequence", ""),
+                                             exclude_ids=[request.args.get("exclude", "")])
+        return jsonify({"primers": primer_records.same_sequence_rows(session, found[:5]), "count": len(found)})
 
 
 @bp.route("/<key>/items/pair", methods=["POST"])
@@ -1047,6 +1075,10 @@ def add_primer_pair(key: str):
             session.rollback()
             return _done(key, error=gettext("Not saved: %(reason)s", reason=refused))
         session.commit()
+        for end, item in zip(("F", "R"), made):
+            twins = primer_records.same_sequence(session, seqs[end], exclude_ids=[m.id for m in made])
+            if twins:
+                flash(f"{names[end]}: {primer_records.same_sequence_note(twins)}", "warning")
         return _done(key, message=gettext("Added %(forward)s (#%(f)s) and %(reverse)s (#%(r)s).",
                                           forward=names["F"], f=made[0].number, reverse=names["R"], r=made[1].number))
 
@@ -1176,6 +1208,7 @@ def update_item(key: str, item_id: int):
             return jsonify({"ok": False, "error": access.reason_denied(item, noun=mv.item_noun)}), 403
         status_was = item.status
         cost_was = _cost_of(session, row, item)
+        sequence_was = svc.clean_sequence(item.attrs_dict.get("sequence"))
         try:
             error, notes = _item_from_form(session, mv, item, request.form)
         except Refused as refused:
@@ -1187,6 +1220,7 @@ def update_item(key: str, item_id: int):
         item.updated_at, item.updated_by = datetime.utcnow(), g.user.username
         session.commit()
         notes += _limit_notes(session, row, item, cost_was, False)
+        notes += _same_sequence_notes(session, row, item, sequence_was)
         answer = _row_json(mv, item)
         if notes:
             answer["notes"] = notes

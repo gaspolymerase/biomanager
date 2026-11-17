@@ -526,6 +526,10 @@
                 <label><span>{{ flabel }}</span> <input name="{{ name }}" readonly tabindex="-1" placeholder="{{ _('from the sequence, on save') }}" title="{{ _('Worked out from the sequence when you save') }}"></label>
               {% else %}
               <label><span>{{ flabel }}{{ star(name) }}</span> <input name="{{ name }}"{% if fd.key == 'sequence' %} class="font-mono" spellcheck="false" autocomplete="off"{% endif %} {% if fd.type == 'date' %}type="date"{% elif fd.type == 'url' %}type="url"{% elif fd.type == 'number' %}type="number" step="any"{% endif %}{% if fd.type == 'user' %} list="inv-owner-options"{% else %}{{ rem(name) }}{% endif %}{{ req(name) }}></label>
+              {% if fd.key == 'sequence' and m.kind == 'primers' %}
+                {# The lab's primers with this sequence already (#163). #}
+                <p class="record-wide record-fill-hint is-warning" data-primer-twin hidden></p>
+              {% endif %}
               {% endif %}
             {% endif %}
             </div>
@@ -594,7 +598,9 @@
     <div class="record-dialog-body">
       <label class="record-wide">{{ _('Name of the pair') }} <input name="name" required autocomplete="off" placeholder="{{ _('e.g. GAPDH qPCR') }}"></label>
       <label class="record-wide">{{ _('Forward (5′→3′)') }} <input name="forward" required class="font-mono" spellcheck="false" autocomplete="off"></label>
+      <p class="record-wide record-fill-hint is-warning" data-primer-twin="forward" hidden></p>
       <label class="record-wide">{{ _('Reverse (5′→3′)') }} <input name="reverse" required class="font-mono" spellcheck="false" autocomplete="off"></label>
+      <p class="record-wide record-fill-hint is-warning" data-primer-twin="reverse" hidden></p>
       <label>{{ category_label }}
         {% if m.categories %}<select name="category"><option value="">{{ _('Not set') }}</option>{% for c in m.categories %}<option value="{{ c }}">{{ c|tr(m.kind) }}</option>{% endfor %}</select>
         {% else %}<input name="category">{% endif %}
@@ -772,6 +778,51 @@
 </script>
 {% if m.kind == 'primers' %}
 <script nonce="{{ csp_nonce() }}">
+  /* Under a sequence being typed: the lab's primers that have it already
+     (#163), each a link to its record, so nobody orders one twice. */
+  (function () {
+    const url = {{ url_for('inventory.same_sequence', key=key) | tojson }};
+    const watch = (dialog, input, hint) => {
+      if (!dialog || !input || !hint) return;
+      let timer = null;
+      let seq = 0;
+      const check = async () => {
+        const mine = ++seq;
+        const typed = input.value.replace(/[^A-Za-z]/g, '');
+        if (typed.length < 8) { hint.hidden = true; return; }
+        const id = (dialog.querySelector('input[name="id"]') || {}).value || '';
+        let data;
+        try {
+          const r = await fetch(`${url}?sequence=${encodeURIComponent(input.value)}&exclude=${encodeURIComponent(id)}`, { credentials: 'same-origin' });
+          data = r.ok ? await r.json() : { primers: [] };
+        } catch (_) { data = { primers: [] }; }
+        if (mine !== seq) return;
+        hint.textContent = '';
+        if (!data.primers.length) { hint.hidden = true; return; }
+        hint.appendChild(document.createTextNode(t('The lab already has this sequence:') + ' '));
+        data.primers.forEach((p, i) => {
+          if (i) hint.appendChild(document.createTextNode('; '));
+          const a = document.createElement('a');
+          a.href = p.url; a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = `${p.name} (#${p.number})`;
+          hint.appendChild(a);
+          const more = [p.status, p.box, p.owner].filter(Boolean).join(', ');
+          if (more) hint.appendChild(document.createTextNode(` · ${more}`));
+        });
+        if (data.count > data.primers.length) hint.appendChild(document.createTextNode(` · ${t('%(n)s more', { n: data.count - data.primers.length })}`));
+        hint.hidden = false;
+      };
+      const soon = () => { clearTimeout(timer); timer = setTimeout(check, 250); };
+      input.addEventListener('input', soon);
+      input.addEventListener('change', soon);
+      dialog.addEventListener('record-dialog:open', () => { hint.hidden = true; setTimeout(check, 0); });
+      dialog.addEventListener('close', () => { seq += 1; hint.hidden = true; });
+    };
+    const item = document.getElementById('item-dialog');
+    watch(item, item && item.querySelector('input[name="attr_sequence"]'), item && item.querySelector('[data-primer-twin]'));
+    const pair = document.getElementById('primer-pair-dialog');
+    ['forward', 'reverse'].forEach((end) => watch(pair, pair && pair.querySelector(`input[name="${end}"]`), pair && pair.querySelector(`[data-primer-twin="${end}"]`)));
+  })();
   /* Copy for ordering: the ticked primers as name<TAB>sequence lines, ready
      to paste into a supplier's bulk-entry box. The text is fetched inside
      the click so the clipboard still counts it as the person's own act. */

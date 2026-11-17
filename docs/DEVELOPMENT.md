@@ -1868,6 +1868,14 @@ pages are in `app/lab_routes.py`.
   only and `_row_json` sends them back after a save. `add_primer_pair`
   makes *name*-F and *name*-R through `inventory_items.item_from_form`, flushing between
   them so the second takes the next free cell.
+  A primer whose sequence the lab already has is pointed out, never
+  refused (GitHub #163): `primer_records.same_sequence()` compares
+  `clean_sequence()` against every primer in `saved_primers()` (from 8
+  bases). `/inventory/<key>/primers/same-sequence?sequence=&exclude=` feeds
+  the `[data-primer-twin]` hint under Sequence in the dialog and Add primer
+  pair; `save_item` (a flash), `update_item` (`notes`, shown as toasts on
+  `sheet:saved`) and `add_primer_pair` say it after a save that changed the
+  sequence (`_same_sequence_notes`).
 - **Presets:** `inventory.PRESETS` (and `lab.INVENTORY_CHOICES` for the
   setup survey) include `chemicals`, `primers`, `glycerol_stocks` and `cell_lines`; Samples has number
   columns for what was measured (`SAMPLE_MEASURES`), which revision 0008

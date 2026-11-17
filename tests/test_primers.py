@@ -2,7 +2,7 @@
 follow the sequence however it is saved, and Add primer pair makes both."""
 from __future__ import annotations
 
-from tests.base import one, rows, uniq
+from tests.base import flashes, one, rows, uniq
 from tests.test_inventory import InventoryCase, attrs_of, item, newest_batch
 from app.inventory_service import primer_numbers, primer_tm  # noqa: E402
 
@@ -66,3 +66,63 @@ class CellLines(InventoryCase):
         for label in ("Passage", "Mycoplasma", "Cell line"):
             self.assertIn(label, html)
         self.assertIn("New vial", html)
+
+
+def a_sequence(n: int = 22) -> str:
+    import random
+    return "".join(random.choice("ACGT") for _ in range(n))
+
+
+class SameSequence(InventoryCase):
+    """#163: a primer the lab already had made is pointed out, not refused,
+    wherever its sequence is typed: the dialog as you type, on saving, the
+    sheet, and Add primer pair."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.key = cls.new_module(cls.a, "primers")
+
+    def test_the_dialog_finds_it_as_you_type_whatever_the_case_and_spaces(self):
+        seq = a_sequence()
+        name = uniq("Actb-F ")
+        pid = self.make_item(self.m, self.key, name, attr_sequence=seq)
+        typed = "5'-" + " ".join(seq[i:i + 5] for i in range(0, len(seq), 5)).lower() + "-3'"
+        got = self.m.get(f"/inventory/{self.key}/primers/same-sequence", query_string={"sequence": typed}).get_json()
+        self.assertEqual([(p["id"], p["name"]) for p in got["primers"]], [(pid, name)])
+        self.assertIn(f"open={pid}", got["primers"][0]["url"])
+        # Not the record being edited, nor a sequence that differs by a base, nor a short one.
+        self.assertEqual(self.m.get(f"/inventory/{self.key}/primers/same-sequence",
+                                    query_string={"sequence": seq, "exclude": pid}).get_json()["primers"], [])
+        self.assertEqual(self.m.get(f"/inventory/{self.key}/primers/same-sequence",
+                                    query_string={"sequence": seq[:-1] + ("A" if seq[-1] != "A" else "C")}).get_json()["primers"], [])
+        self.assertEqual(self.m.get(f"/inventory/{self.key}/primers/same-sequence",
+                                    query_string={"sequence": seq[:6]}).get_json()["primers"], [])
+
+    def test_saving_a_second_one_says_so_and_still_saves_it(self):
+        seq = a_sequence()
+        first = uniq("Gapdh-R ")
+        self.make_item(self.m, self.key, first, attr_sequence=seq)
+        second = uniq("Gapdh-R again ")
+        r = self.post(self.m, f"/inventory/{self.key}/items/save", data={"id": "", "name": second, "attr_sequence": seq})
+        self.assertFlash(r, "already has this sequence", "warning")
+        self.assertFlash(r, first, "warning")
+        self.assertEqual(one("select count(*) from inventory_items where name=?", second), 1)
+        # Saving it again unchanged says nothing more.
+        again = one("select id from inventory_items where name=?", second)
+        r = self.post(self.m, f"/inventory/{self.key}/items/save", data={"id": str(again), "name": second, "attr_sequence": seq})
+        self.assertFalse(any("already has this sequence" in text for _k, text in flashes(r)))
+
+    def test_the_sheet_and_add_primer_pair_say_so_too(self):
+        seq = a_sequence()
+        first = uniq("Tubb3 ")
+        self.make_item(self.m, self.key, first, attr_sequence=seq)
+        other = self.make_item(self.m, self.key, uniq("Blank "))
+        r = self.autosave(self.m, f"/inventory/{self.key}/items/{other}/update", {"attr_sequence": seq})
+        self.assertEqual(r.status_code, 200, r.get_data(as_text=True))
+        self.assertTrue(any(first in n for n in r.get_json().get("notes", [])), r.get_json())
+        base = uniq("Pair ")
+        r = self.post(self.m, f"/inventory/{self.key}/items/pair",
+                      data={"name": base, "forward": seq.lower(), "reverse": a_sequence()})
+        self.assertFlash(r, f"{base}-F: The lab already has this sequence", "warning")
+        self.assertFalse(any(f"{base}-R:" in text for _k, text in flashes(r)))

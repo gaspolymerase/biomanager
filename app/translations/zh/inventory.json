@@ -560,5 +560,6 @@
   "%(who)s is over the spending limit": "%(who)s 已超出花费限额",
   "%(used)s asked for this month, of %(limit)s.": "本月已申请 %(used)s，限额为 %(limit)s。",
   "%(used)s asked for this year, of %(limit)s.": "本年度已申请 %(used)s，限额为 %(limit)s。",
-  "Open in Vendors": "在供应商页面打开"
+  "Open in Vendors": "在供应商页面打开",
+  "The lab already has this sequence: %(primers)s.": "实验室已经有这条序列：%(primers)s。"
 }

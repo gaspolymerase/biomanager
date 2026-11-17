@@ -160,6 +160,48 @@ def saved_primers(session) -> list[tuple[InventoryModule, InventoryItem]]:
     return [(by_id[i.module_id_fk], i) for i in items]
 
 
+SAME_FROM = 8              # bases a sequence needs before it is checked against the lab's (#163)
+
+
+def same_sequence(session, sequence, exclude_ids=()) -> list[tuple[InventoryModule, InventoryItem]]:
+    """The primers this person can see whose sequence is this one, base for
+    base (case, spaces and 5′/3′ marks aside), so nobody orders a primer
+    the lab already had made."""
+    from . import inventory_service as inventories
+
+    wanted = inventories.clean_sequence(sequence)
+    if len(wanted) < SAME_FROM:
+        return []
+    skip = {int(i) for i in exclude_ids if str(i).isdigit()}
+    return [(module, item) for module, item in saved_primers(session)
+            if item.id not in skip and inventories.clean_sequence(item.attrs_dict.get("sequence")) == wanted]
+
+
+def same_sequence_rows(session, found) -> list[dict]:
+    """What the page shows of each: its number, name, status, box and owner,
+    and the address that opens it."""
+    from flask import url_for
+
+    from .inventory_items import _tr
+    from .lab_notebook import display_names
+
+    names = display_names(session, [item.owner for _module, item in found])
+    return [{"id": item.id, "number": item.number, "name": item.name or f"#{item.number}",
+             "status": _tr(item.status) if item.status else "", "box": item.rack.name if item.rack else "",
+             "owner": names.get(item.owner, item.owner) if item.owner else "", "database": _tr(module.label),
+             "url": url_for("inventory.module", key=module.key, open=item.id)} for module, item in found]
+
+
+def same_sequence_note(found) -> str:
+    """One line saying which primers already have this sequence."""
+    from .i18n import gettext
+    from .inventory_items import _tr
+
+    which = ", ".join(f"{item.name or ''} (#{item.number}{', ' + _tr(item.status) if item.status else ''})".strip()
+                      for _module, item in found[:3])
+    return gettext("The lab already has this sequence: %(primers)s.", primers=which)
+
+
 def primers_module(session, user: str = "", create: bool = True) -> InventoryModule | None:
     """The lab's Primers database, made when none exists yet and `create`."""
     from . import inventory_service as inventories

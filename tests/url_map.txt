@@ -288,6 +288,7 @@
 /inventory/<key>/items/pair	inventory.add_primer_pair	POST
 /inventory/<key>/items/save	inventory.save_item	POST
 /inventory/<key>/order-sheet.<fmt>	inventory.order_sheet	GET
+/inventory/<key>/primers/same-sequence	inventory.same_sequence	GET
 /inventory/<key>/racks/<int:rack_id>/delete	inventory.delete_rack	POST
 /inventory/<key>/racks/save	inventory.save_rack	POST
 /inventory/<key>/renumber	inventory.renumber	GET POST
