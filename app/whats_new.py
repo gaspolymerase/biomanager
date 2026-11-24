@@ -30,6 +30,14 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.13.0": {
+        "new": [
+            "A black-and-white **Mono** theme in **Settings → Appearance & language**: no glass and no colour, black buttons, white in dark mode.",
+        ],
+        "changed": [
+            "**Bench** is no longer a theme; if you chose it, your choices stay as they were.",
+        ],
+    },
     "2.12.0": {
         "new": [
             "**Samples** are numbered by type: give a type a prefix in **Configure** and a sample left without a Sample ID is named after it, tissue T1, T2…, blood BL1…",
