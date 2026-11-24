@@ -1,5 +1,6 @@
 /* Settings → Appearance (app/appearance.py): what base.html marks on <html>
-   for the rows of a sheet, and the theme cards on the Settings page.
+   for the rows of a sheet and the Mono look, and the theme cards on the
+   Settings page.
    The defaults (roomy rows with lines between them) are tailwind.css's own,
    so they are marked by leaving the attribute out. Unlayered on purpose: it
    wins over the component layer it adjusts. */
@@ -24,6 +25,192 @@
 :root:is([data-rows="stripes"], [data-rows="both"]) .dt tbody > tr:nth-child(even):not(.is-selected):hover {
   background-color: var(--sheet-hover);
 }
+
+/* --- The Mono look (data-look="mono") ------------------------------------
+   Black and white: white paper, black ink, greys for the rest, and no glass,
+   no wallpaper and no blur. Panes are told apart by a hairline, not a
+   shadow. Colour is kept only where it warns or tells what state something
+   is in (danger, warning, a living animal's dot); the colours that only
+   decorate (a database's tone, a purpose, a person's badge) become greys.
+   The accent is the person's colour; the Mono theme's is Ink (black, white
+   in dark mode), which app/appearance.py brand_css writes.
+   Every token set here is set again for dark mode below (and copied for a
+   chosen dark mode into theme-dark.css by scripts/theme-dark-css.py), or this
+   light value would win there. */
+:root[data-look="mono"] {
+  --wall: none;
+  --color-canvas:   #FFFFFF;
+  --color-surface:  #FFFFFF;
+  --color-recess:   #F4F4F4;
+  --color-hairline: #E5E5E5;
+  --color-ink:      #0D0D0D;
+  --color-ink-soft: #3A3A3A;
+  --color-muted:    #666666;
+  --color-sand-25:  #FFFFFF;
+  --color-sand-50:  #F7F7F7;
+  --color-sand-100: #F2F2F2;
+  --color-sand-200: #E8E8E8;
+  --color-sand-300: #D4D4D4;
+  --color-sand-400: #BDBDBD;
+  --color-sand-500: #8F8F8F;
+  --color-sand-600: #666666;
+  --color-sand-700: #474747;
+  --color-sand-800: #2B2B2B;
+  --color-sand-900: #0D0D0D;
+  --color-ok-50:    #F2F2F2;
+  --color-ok-200:   #E0E0E0;
+  --color-ok-700:   #3A3A3A;
+  --color-info-50:  #F2F2F2;
+  --color-info-200: #E0E0E0;
+  --color-info-600: #3A3A3A;
+  --color-info-700: #3A3A3A;
+  --color-violet-50: #F2F2F2; --color-violet-100: #EBEBEB; --color-violet-200: #E0E0E0; --color-violet-300: #BDBDBD; --color-violet-400: #A3A3A3; --color-violet-500: #8F8F8F; --color-violet-600: #6B6B6B; --color-violet-700: #3A3A3A; --color-violet-800: #2B2B2B; --color-violet-900: #1A1A1A;
+  --color-sky-50: #F2F2F2; --color-sky-100: #EBEBEB; --color-sky-200: #E0E0E0; --color-sky-300: #BDBDBD; --color-sky-400: #A3A3A3; --color-sky-500: #8F8F8F; --color-sky-600: #6B6B6B; --color-sky-700: #3A3A3A; --color-sky-800: #2B2B2B; --color-sky-900: #1A1A1A;
+  --color-pink-50: #F2F2F2; --color-pink-100: #EBEBEB; --color-pink-200: #E0E0E0; --color-pink-300: #BDBDBD; --color-pink-400: #A3A3A3; --color-pink-500: #8F8F8F; --color-pink-600: #6B6B6B; --color-pink-700: #3A3A3A; --color-pink-800: #2B2B2B; --color-pink-900: #1A1A1A;
+  --color-teal-50: #F2F2F2; --color-teal-100: #EBEBEB; --color-teal-200: #E0E0E0; --color-teal-300: #BDBDBD; --color-teal-400: #A3A3A3; --color-teal-500: #8F8F8F; --color-teal-600: #6B6B6B; --color-teal-700: #3A3A3A; --color-teal-800: #2B2B2B; --color-teal-900: #1A1A1A;
+  --color-amber-50: #F2F2F2; --color-amber-100: #EBEBEB; --color-amber-200: #E0E0E0; --color-amber-300: #BDBDBD; --color-amber-400: #A3A3A3; --color-amber-500: #8F8F8F; --color-amber-600: #6B6B6B; --color-amber-700: #3A3A3A; --color-amber-800: #2B2B2B; --color-amber-900: #1A1A1A;
+  --color-lime-50: #F2F2F2; --color-lime-100: #EBEBEB; --color-lime-200: #E0E0E0; --color-lime-300: #BDBDBD; --color-lime-400: #A3A3A3; --color-lime-500: #8F8F8F; --color-lime-600: #6B6B6B; --color-lime-700: #3A3A3A; --color-lime-800: #2B2B2B; --color-lime-900: #1A1A1A;
+  --color-indigo-50: #F2F2F2; --color-indigo-100: #EBEBEB; --color-indigo-200: #E0E0E0; --color-indigo-300: #BDBDBD; --color-indigo-400: #A3A3A3; --color-indigo-500: #8F8F8F; --color-indigo-600: #6B6B6B; --color-indigo-700: #3A3A3A; --color-indigo-800: #2B2B2B; --color-indigo-900: #1A1A1A;
+  --color-blue-50: #F2F2F2; --color-blue-100: #EBEBEB; --color-blue-200: #E0E0E0; --color-blue-300: #BDBDBD; --color-blue-400: #A3A3A3; --color-blue-500: #8F8F8F; --color-blue-600: #6B6B6B; --color-blue-700: #3A3A3A; --color-blue-800: #2B2B2B; --color-blue-900: #1A1A1A;
+
+  --material-sidebar: #F9F9F9;
+  --material-bar:     #FFFFFF;
+  --material-popover: #FFFFFF;
+  --palette-glass:    #FFFFFF;
+  --palette-scrim:    rgba(0, 0, 0, 0.12);
+  --palette-row:      #F2F2F2;
+  --palette-line:     #EBEBEB;
+  --glass:          #FFFFFF;
+  --glass-strong:   #FFFFFF;
+  --glass-fill:     #FFFFFF;
+  --glass-light:    linear-gradient(transparent, transparent);
+  --glass-glow:     transparent;
+  --glass-sheen:    transparent;
+  --glass-hi:       transparent;
+  --glass-edge:     transparent;
+  --control-hi:     transparent;
+  --glass-rim:      #E5E5E5;
+  --glass-ring:     #E5E5E5;
+  --glass-lo:       rgba(0, 0, 0, 0.04);
+  --glass-shadow:   0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --glass-lift:     0 0 #0000;
+  --glass-clear:    #F9F9F9;
+  --glass-regular:  #FFFFFF;
+  --glass-thick:    #FFFFFF;
+  --glass-solid:    #EDEDED;
+  --sheet-glass:    #FFFFFF;
+  --sheet-head:     #FFFFFF;
+  --sheet-pin:      #FFFFFF;
+  --sheet-hover:    #F7F7F7;
+  --sheet-lift:     #F0F0F0;
+  --sheet-rule:     #EFEFEF;
+  --row-stripe:     #FAFAFA;
+
+  --shadow-xs:  0 0 0 1px #E8E8E8;
+  --shadow-sm:  0 0 0 1px #E5E5E5;
+  --shadow-md:  0 0 0 1px #E5E5E5, 0 4px 12px rgb(0 0 0 / 0.05);
+  --shadow-lg:  0 0 0 1px #E0E0E0, 0 12px 32px rgb(0 0 0 / 0.10);
+  --shadow-pop: 0 0 0 1px #E0E0E0, 0 16px 48px rgb(0 0 0 / 0.14);
+
+  --field-bg: #FFFFFF;
+  --field-border: #DCDCDC;
+  --field-border-hover: #BDBDBD;
+  --field-shadow: none;
+  --field-disabled-bg: #F4F4F4;
+  --placeholder-ink: rgb(0 0 0 / 0.38);
+  --focus-ring: 0 0 0 3px rgb(0 0 0 / 0.10);
+  --focus-border: #0D0D0D;
+  --scrim: rgb(0 0 0 / 0.24);
+  --scrim-blur: 0px;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-look="mono"]:not([data-theme="light"]) {
+    --color-canvas:   #181818;
+    --color-surface:  #1F1F1F;
+    --color-recess:   #232323;
+    --color-hairline: #2E2E2E;
+    --color-ink:      #ECECEC;
+    --color-ink-soft: #C8C8C8;
+    --color-muted:    #9A9A9A;
+    --color-sand-25:  #000000;
+    --color-sand-50:  #1C1C1C;
+    --color-sand-100: #262626;
+    --color-sand-200: #303030;
+    --color-sand-300: #3D3D3D;
+    --color-sand-400: #5A5A5A;
+    --color-sand-500: #8A8A8A;
+    --color-sand-600: #A3A3A3;
+    --color-sand-700: #C8C8C8;
+    --color-sand-800: #E0E0E0;
+    --color-sand-900: #ECECEC;
+    --color-ok-50:    #262626;
+    --color-ok-200:   #333333;
+    --color-ok-700:   #C8C8C8;
+    --color-info-50:  #262626;
+    --color-info-200: #333333;
+    --color-info-600: #C8C8C8;
+    --color-info-700: #C8C8C8;
+    --color-violet-50: #262626; --color-violet-100: #2B2B2B; --color-violet-200: #333333; --color-violet-300: #C8C8C8; --color-violet-400: #A3A3A3; --color-violet-500: #8A8A8A; --color-violet-600: #A3A3A3; --color-violet-700: #C8C8C8; --color-violet-800: #D8D8D8; --color-violet-900: #ECECEC;
+    --color-sky-50: #262626; --color-sky-100: #2B2B2B; --color-sky-200: #333333; --color-sky-300: #C8C8C8; --color-sky-400: #A3A3A3; --color-sky-500: #8A8A8A; --color-sky-600: #A3A3A3; --color-sky-700: #C8C8C8; --color-sky-800: #D8D8D8; --color-sky-900: #ECECEC;
+    --color-pink-50: #262626; --color-pink-100: #2B2B2B; --color-pink-200: #333333; --color-pink-300: #C8C8C8; --color-pink-400: #A3A3A3; --color-pink-500: #8A8A8A; --color-pink-600: #A3A3A3; --color-pink-700: #C8C8C8; --color-pink-800: #D8D8D8; --color-pink-900: #ECECEC;
+    --color-teal-50: #262626; --color-teal-100: #2B2B2B; --color-teal-200: #333333; --color-teal-300: #C8C8C8; --color-teal-400: #A3A3A3; --color-teal-500: #8A8A8A; --color-teal-600: #A3A3A3; --color-teal-700: #C8C8C8; --color-teal-800: #D8D8D8; --color-teal-900: #ECECEC;
+    --color-amber-50: #262626; --color-amber-100: #2B2B2B; --color-amber-200: #333333; --color-amber-300: #C8C8C8; --color-amber-400: #A3A3A3; --color-amber-500: #8A8A8A; --color-amber-600: #A3A3A3; --color-amber-700: #C8C8C8; --color-amber-800: #D8D8D8; --color-amber-900: #ECECEC;
+    --color-lime-50: #262626; --color-lime-100: #2B2B2B; --color-lime-200: #333333; --color-lime-300: #C8C8C8; --color-lime-400: #A3A3A3; --color-lime-500: #8A8A8A; --color-lime-600: #A3A3A3; --color-lime-700: #C8C8C8; --color-lime-800: #D8D8D8; --color-lime-900: #ECECEC;
+    --color-indigo-50: #262626; --color-indigo-100: #2B2B2B; --color-indigo-200: #333333; --color-indigo-300: #C8C8C8; --color-indigo-400: #A3A3A3; --color-indigo-500: #8A8A8A; --color-indigo-600: #A3A3A3; --color-indigo-700: #C8C8C8; --color-indigo-800: #D8D8D8; --color-indigo-900: #ECECEC;
+    --color-blue-50: #262626; --color-blue-100: #2B2B2B; --color-blue-200: #333333; --color-blue-300: #C8C8C8; --color-blue-400: #A3A3A3; --color-blue-500: #8A8A8A; --color-blue-600: #A3A3A3; --color-blue-700: #C8C8C8; --color-blue-800: #D8D8D8; --color-blue-900: #ECECEC;
+
+    --material-sidebar: #141414;
+    --material-bar:     #181818;
+    --material-popover: #232323;
+    --palette-glass:    #232323;
+    --palette-scrim:    rgba(0, 0, 0, 0.45);
+    --palette-row:      #2E2E2E;
+    --palette-line:     #2E2E2E;
+    --glass:          #1F1F1F;
+    --glass-strong:   #1F1F1F;
+    --glass-fill:     #1F1F1F;
+    --glass-rim:      #2E2E2E;
+    --glass-ring:     #2E2E2E;
+    --glass-lo:       rgba(0, 0, 0, 0.3);
+    --glass-shadow:   0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --glass-clear:    #141414;
+    --glass-regular:  #1F1F1F;
+    --glass-thick:    #1F1F1F;
+    --glass-solid:    #2E2E2E;
+    --sheet-glass:    #1F1F1F;
+    --sheet-head:     #1F1F1F;
+    --sheet-pin:      #1F1F1F;
+    --sheet-hover:    #262626;
+    --sheet-lift:     #2A2A2A;
+    --sheet-rule:     #2A2A2A;
+    --row-stripe:     #1C1C1C;
+
+    --shadow-xs:  0 0 0 1px #2A2A2A;
+    --shadow-sm:  0 0 0 1px #2E2E2E;
+    --shadow-md:  0 0 0 1px #2E2E2E, 0 4px 14px rgb(0 0 0 / 0.4);
+    --shadow-lg:  0 0 0 1px #333333, 0 14px 36px rgb(0 0 0 / 0.5);
+    --shadow-pop: 0 0 0 1px #333333, 0 18px 52px rgb(0 0 0 / 0.6);
+
+    --field-bg: #1A1A1A;
+    --field-border: #333333;
+    --field-border-hover: #4A4A4A;
+    --field-disabled-bg: #222222;
+    --placeholder-ink: rgb(255 255 255 / 0.36);
+    --focus-ring: 0 0 0 3px rgb(255 255 255 / 0.14);
+    --focus-border: #ECECEC;
+    --scrim: rgb(0 0 0 / 0.55);
+  }
+}
+/* Nothing to see through, so nothing to blur. */
+:root[data-look="mono"] * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* A person's badge has their own colour, written on it: grey here. */
+:root[data-look="mono"] .owner-badge {
+  background: var(--color-recess) !important; color: var(--color-ink-soft) !important;
+  box-shadow: inset 0 0 0 1px var(--color-hairline);
+}
+/* Buttons are flat: one fill, no light across the top. */
+:root[data-look="mono"] .btn-primary { background: var(--color-brand-600); }
+:root[data-look="mono"] .btn-primary:hover { background: color-mix(in srgb, var(--color-brand-600) 86%, var(--color-canvas)); }
 
 /* --- Settings: the theme cards ------------------------------------------ */
 .theme-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; }
