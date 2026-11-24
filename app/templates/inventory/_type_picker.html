@@ -1,0 +1,46 @@
+{# A database with a tab per type but no types yet (a new Samples): the
+   lab ticks the types it keeps, each with the prefix its entries are
+   numbered after (tissue T1, T2…), and adds any of its own. Posted to
+   inventory.choose_types; afterwards + adds one and Configure changes them. #}
+{% set offered = m.offered_types %}
+{% set own_rows = 2 if offered else 4 %}
+<section class="card mb-3 max-w-[760px]" data-type-picker>
+  <header class="card-head"><h2>{{ icon('tag') }} {{ _('Which %(nouns)s does the lab keep?', nouns=nouns) }}</h2></header>
+  <form method="post" action="{{ url_for('inventory.choose_types', key=key) }}">
+    <div class="p-4">
+      <p class="mb-3 text-[13px] leading-snug text-muted">
+        {% trans trimmed nouns=nouns %}Tick the types you need: each gets a tab, and its {{ nouns }} are numbered on
+        their own after its prefix. Type your lab's own prefix; one left empty is not numbered, and you name those yourself.
+        + adds another type later.{% endtrans %}
+      </p>
+      <table class="field-editor">
+        <thead><tr><th>{{ _('Use it') }}</th><th>{{ category_label }}</th><th>{{ _('Prefix') }}</th><th>{{ _('Numbered') }}</th></tr></thead>
+        <tbody>
+          {% for name, prefix in offered.items() %}
+            <tr data-type-pick>
+              <td class="text-center"><input type="checkbox" name="types_{{ loop.index0 }}_on" value="1" aria-label="{{ name|tr(m.kind) }}" data-type-on></td>
+              <td><input type="hidden" name="types_{{ loop.index0 }}_name" value="{{ name }}">{{ name|tr(m.kind) }}</td>
+              <td><input type="text" name="types_{{ loop.index0 }}_prefix" value="{{ prefix }}" maxlength="12" class="field w-24 font-mono"
+                         aria-label="{{ _('Prefix for %(type)s', type=name|tr(m.kind)) }}" autocomplete="off" data-type-prefix></td>
+              <td class="whitespace-nowrap font-mono text-muted" data-type-example>{{ prefix }}1, {{ prefix }}2, {{ prefix }}3…</td>
+            </tr>
+          {% endfor %}
+          {% for i in range(offered|length, offered|length + own_rows) %}
+            <tr data-type-pick>
+              <td class="text-center"><input type="hidden" name="types_{{ i }}_on" value="1"></td>
+              <td><input type="text" name="types_{{ i }}_name" maxlength="80" autocomplete="off"
+                         placeholder="{{ _('Your own, e.g. plasma') if loop.first else _('Your own') }}" aria-label="{{ _('A type of your own') }}"></td>
+              <td><input type="text" name="types_{{ i }}_prefix" maxlength="12" class="field w-24 font-mono" placeholder="{{ 'PL' if loop.first else '' }}"
+                         aria-label="{{ _('Its prefix') }}" autocomplete="off" data-type-prefix></td>
+              <td class="whitespace-nowrap font-mono text-muted" data-type-example></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <input type="hidden" name="types_count" value="{{ offered|length + own_rows }}">
+    </div>
+    <footer class="flex items-center justify-end gap-2 border-t border-sand-100 px-4 py-3">
+      <button type="submit" class="btn btn-primary">{{ icon('check') }} {{ _('Use these types') }}</button>
+    </footer>
+  </form>
+</section>

@@ -101,6 +101,19 @@ const INV_CONFIGURE = JSON.parse(document.getElementById('inventory-configure-da
       tr.dataset.choiceRow = '';
       tr.dataset.count = '0';
       tr.innerHTML = '<td><input type="hidden" data-choice-was><input type="text" data-choice-value></td><td class="choice-usage"></td><td></td><td class="choice-replace"></td>';
+      if ('choicePrefixes' in editor.dataset) {
+        // A type's prefix (its new entries are numbered T1, T2…), after its name.
+        const cell = document.createElement('td');
+        const prefix = document.createElement('input');
+        prefix.type = 'text';
+        prefix.name = `${name}_${i}_prefix`;
+        prefix.maxLength = 12;
+        prefix.className = 'field w-24 font-mono';
+        prefix.autocomplete = 'off';
+        prefix.setAttribute('aria-label', t('Prefix'));
+        cell.appendChild(prefix);
+        tr.firstElementChild.after(cell);
+      }
       tr.querySelector('[data-choice-was]').name = `${name}_${i}_was`;
       const input = tr.querySelector('[data-choice-value]');
       input.placeholder = t('New…');

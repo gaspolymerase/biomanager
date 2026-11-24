@@ -297,6 +297,7 @@
 /inventory/<key>/spending.csv	inventory.spending_csv	GET
 /inventory/<key>/spending/settings	inventory.spending_settings	POST
 /inventory/<key>/types/add	inventory.add_type	POST
+/inventory/<key>/types/choose	inventory.choose_types	POST
 /inventory/new	inventory.new_module	GET POST
 /joined	door.joined	GET
 /joined/status	door.joined_status	GET

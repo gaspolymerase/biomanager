@@ -199,9 +199,21 @@
       </table>
       <h2 id="samples-by-type">Samples by type</h2>
       <p>Tissue blocks and tubes of DNA are kept differently and described differently, so Samples has a tab for each type above
-        the sheet: <b>All</b>, then <b>tissue</b>, <b>blood</b>, <b>serum</b>, <b>DNA</b>, <b>RNA</b>, <b>protein</b> and the rest, each
-        with how many it holds.</p>
+        the sheet: <b>All</b>, then one per type the lab keeps (<b>tissue</b>, <b>DNA</b>…), each with how many it holds.</p>
+      <p>A new Samples starts with no types. The first time it is opened it asks <b>Which samples does the lab keep?</b>: tick
+        the ones you need (tissue, blood, serum, DNA, RNA, protein, organoid, cells, other), add any of your own, and give each
+        a <b>Prefix</b>, then <b>Use these types</b>. Anyone who uses Samples can do it, once; afterwards <b>+</b> adds a type
+        and <b>Configure</b> changes them.</p>
       <ul>
+        <li><b>Each type is numbered on its own.</b> A new sample left without a Sample ID is named after its type's prefix and
+          the next number of that type: tissue T1, T2, T3…, blood BL1, BL2…, whoever adds it and however (the dialog,
+          <b>Add many</b>, an import, an experiment's samples). The dialog says the name before you save. A Sample ID you type
+          is kept, and moves the count on (type T41 and the next tissue is T42); a deleted sample's name is never given again,
+          as its tube may still say it. A type with no prefix isn't numbered: you name its samples yourself. The <b>#</b>
+          column stays the number of each sample in Samples as a whole, which notebook links and labels go by.</li>
+        <li><b>Change a prefix</b> in <b>Configure</b>, under <i>Type choices</i>: the <b>Prefix</b> beside each type. A lab
+          that already named its tissue B1, B2… gives tissue the prefix B, and the next tissue sample is one past the highest
+          B number. Two types can't share a prefix, and a prefix can't end in a digit.</li>
         <li><b>A tab shows only its own columns.</b> <b>tissue</b> has <i>Tissue</i> (the organ: lung, DRG…), <i>Fixation</i> (fresh
           frozen, 4% PFA, formalin, RNAlater…) and <i>Orientation</i> (sagittal, coronal…), and no 260/280; <b>DNA</b> and
           <b>RNA</b> have the concentration, its unit, 260/280, 260/230 and volume, and no fixation. <b>All</b> shows every column,
@@ -212,8 +224,8 @@
           <b>Type</b> in the dialog changes the fields it shows.</li>
         <li><b>Genotype</b> comes from the source mouse: left empty, it shows that mouse's genotype from the colony, in grey, and
           follows it when the mouse is re-genotyped. Type one to give the sample its own. Search finds samples by either.</li>
-        <li><b>+</b> at the end of the tabs adds a type (slides, plasma, CSF…): anyone can, and it gets a tab of its own with the
-          columns every type has. Renaming or removing a type is in <b>Configure</b>, under <i>Type choices</i>.</li>
+        <li><b>+</b> at the end of the tabs adds a type (slides, plasma, CSF…), with its prefix: anyone can, and it gets a tab of
+          its own with the columns every type has. Renaming or removing a type is in <b>Configure</b>, under <i>Type choices</i>.</li>
         <li>Which columns a type has is each column's <b>Used for</b> in <b>Configure</b>: the types it is for, separated by commas,
           or empty for every type. Any inventory can have tabs: tick <b>A tab for each type</b> under <i>What it tracks</i>.</li>
       </ul>
@@ -331,7 +343,7 @@
       </div>
   </main>
   <nav class="docs-rail" aria-label="On this page">
-      <p>On this page · 14 min read</p>
+      <p>On this page · 15 min read</p>
       <ol>
         <li class="lvl2"><a href="#a-week">What this does for your week</a></li>
         <li class="lvl2"><a href="#samples-by-type">Samples by type</a></li>

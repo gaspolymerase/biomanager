@@ -76,13 +76,31 @@ class InventoryCase(AppTestCase):
     """Helpers shared by the inventory tests."""
 
     @staticmethod
-    def new_module(client, preset: str = "custom", label: str | None = None) -> str:
-        """Create an inventory through /inventory/new; returns its key."""
+    def new_module(client, preset: str = "custom", label: str | None = None, types: dict | None = None) -> str:
+        """Create an inventory through /inventory/new; returns its key. A
+        Samples starts with no types until they are picked: `types`
+        ({type: prefix}) picks them, by default every type it offers, with
+        no prefixes (named by hand, as before types were numbered); {}
+        leaves it without."""
         label = label or uniq(f"{preset.title()} ")
         r = client.post("/inventory/new", data={"preset": preset, "label": label, "audience": "lab"})
         path = location(r)
         assert path.startswith("/inventory/") and "/new" not in path, (r.status_code, path)
-        return path.split("?")[0].rsplit("/", 1)[1]
+        key = path.split("?")[0].rsplit("/", 1)[1]
+        if preset == "samples":
+            from app.inventory import SAMPLE_TYPES
+            InventoryCase.choose_types(client, key, {t: "" for t in SAMPLE_TYPES} if types is None else types)
+        return key
+
+    @staticmethod
+    def choose_types(client, key: str, types: dict[str, str]):
+        """Tick these types ({type: prefix}) in the picker of a database with none yet."""
+        if not types:
+            return None
+        data = {"types_count": str(len(types))}
+        for i, (name, prefix) in enumerate(types.items()):
+            data.update({f"types_{i}_name": name, f"types_{i}_on": "1", f"types_{i}_prefix": prefix})
+        return client.post(f"/inventory/{key}/types/choose", data=data)
 
     @staticmethod
     def make_rack(client, key: str, name: str | None = None, rows: int = 9, cols: int = 9, **fields) -> int:

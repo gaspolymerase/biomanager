@@ -2771,7 +2771,7 @@ ITEM_PLACE = ("owner", "shared", "box", "position", "location_note", "notes")
                 Field("tank", "tank", "Or the zebrafish tank it came from"),
                 Field("animal", "org_animal", "Or the animal (or group) in another organism database"),
                 Field("database", "text", "The inventory, by its key or name (the lab's Samples if left out)"),
-                Field("name", "text", "Its sample ID"),
+                Field("name", "text", "Its sample ID; left out, a type with a prefix names it, that type's next (T12)"),
                 Field("category", "text", "What it is: tissue, blood, serum, DNA, RNA… as the inventory's list has them"),
                 Field("collected_on", "date", "When it was collected"),
                 Field("amount", "text", "How much"),

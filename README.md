@@ -559,7 +559,7 @@ change:
 
 | Preset | Tracks |
 | --- | --- |
-| 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it and its **Genotype** from the colony, and its sex, age, genotype, status, owner and cage on hovering the arrow that opens it; a tab for each type (tissue, blood, DNA, RNA… and any you add with **+**), each with its own columns: a tissue's **Tissue**, **Fixation** and **Orientation**, a DNA's or RNA's concentration, unit, 260/280, 260/230 and volume as numbers; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position |
+| 🧫 **Samples** | harvested tissue and material, linked to the animal it came from (type its ID in **Source**, or set a whole harvest at once), with that mouse's **Custom tag** beside it and its **Genotype** from the colony, and its sex, age, genotype, status, owner and cage on hovering the arrow that opens it; a tab for each type the lab keeps (picked when Samples is first opened, from tissue, blood, DNA, RNA… or its own, and more with **+**), each numbered on its own after its prefix (tissue T1, T2…; blood BL1…) and with its own columns: a tissue's **Tissue**, **Fixation** and **Orientation**, a DNA's or RNA's concentration, unit, 260/280, 260/230 and volume as numbers; stored at RT / 4 °C / −20 °C / −80 °C / LN₂ in a box position |
 | 🛒 **Orders** | a board from *requested* to *ordered* to *received*, with vendor, catalogue number, price and grant account, and what it all costs |
 | ⚗️ **Reagents** | quantity (with a **Low at** level that marks a bottle low as it runs down), concentration, CAS number, hazards (several per bottle), supplier and lot, and expiry dates with warnings |
 | 🧂 **Chemicals** | your lab's chemical list: name, abbreviation, CAS number, molecular weight, purity and density, with lot, expiry and where each bottle is, and its hazards, several at once, including the controlled classes a safety office asks about (drug and explosive precursors, highly toxic); a **Formulation** in the notebook picks from it and works out the moles, and Utilities' calculators know each molecular weight |
@@ -584,6 +584,12 @@ database has a name of its own (one another database has is refused), so
   columns used for the type chosen. **+** at the end adds a type; which
   columns each type uses is **Used for** in Configure, and any inventory can
   turn on **A tab for each type**.
+- **Numbered by type** — a new Samples asks which types the lab keeps and a
+  **Prefix** for each. A sample left without a Sample ID is named after its
+  type's prefix and that type's next number (tissue T1, T2…; blood BL1…),
+  however it was added; one you type is kept, and a deleted one's name is
+  not given again. Configure changes a type's prefix; the # stays each
+  sample's number in Samples as a whole.
 - **Split notes** — a sheet brought in from somewhere else often left
   everything in the notes ("Tissue: Lung; Fixation: 4% PFA; control 2w").
   Tick the rows and **Split notes**: each "Column: value" goes into the
