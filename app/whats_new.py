@@ -30,6 +30,12 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.12.0": {
+        "new": [
+            "**Samples** are numbered by type: give a type a prefix in **Configure** and a sample left without a Sample ID is named after it, tissue T1, T2…, blood BL1…",
+            "A new **Samples** asks which types the lab keeps, each with its prefix, instead of starting with nine.",
+        ],
+    },
     "2.11.0": {
         "new": [
             "Cite a paper in a notebook page with `[@` or `/cite`: (Smith et al., 2024), linked to its note in Reading; **References** lists the papers a page cites.",

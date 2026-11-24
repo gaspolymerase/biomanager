@@ -39,5 +39,9 @@
   "Spending by month": "每月花费",
   "The spending could not be loaded. Check the connection and try again.": "花费数据没能载入。请检查网络连接后再试。",
   "Within the limit": "未超出限额",
-  "%(n)s vendors ticked": "已勾选 %(n)s 个供应商"
+  "%(n)s vendors ticked": "已勾选 %(n)s 个供应商",
+  "Left unnamed, they are named %(first)s–%(last)s.": "不填名称时，依次命名为 %(first)s–%(last)s。",
+  "Left unnamed, it is named %(code)s.": "不填名称时，命名为 %(code)s。",
+  "named by hand": "自己命名",
+  "Prefix": "前缀"
 }

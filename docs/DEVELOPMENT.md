@@ -1897,6 +1897,28 @@ pages are in `app/lab_routes.py`.
   (`GENOTYPE_KEY`), empty, shows the source mouse's (`_mouse_links` reads
   `genotype` with the tag; `_source_genotype`) as an italic placeholder
   (`input.from-colony`) and as the row's `data-mouse-genotype` for search.
+- **Types picked, numbered by type:** the Samples preset has no
+  `categories`; its `offered_types` ({type: suggested prefix},
+  `inventory.SAMPLE_TYPES`) fill `inventory/_type_picker.html`, which the
+  page shows while the database has tabs and no types
+  (`ModuleView.choosing_types`) and which posts to `choose_types` (once;
+  anyone who can open it). Settings `prefixes` ({type: prefix},
+  `normalise_settings` keeps those of listed types; `prefix_problems`
+  refuses two alike or one ending in a digit) come from the picker,
+  `add_type`'s prefix and Configure's **Prefix** column on the type rows
+  (`_prefixes_from`: a renamed type keeps its own unless the row changes it).
+  `inventory_service._new_entries_named_by_type`, a `before_flush` hook,
+  names a new item with no name and a prefixed type `prefix + n`, however it
+  was made: n is one past the highest after that prefix among the
+  database's names (any type; `code_number`, leading zeros kept), names in
+  the flush, and `app_settings` `code_high:<module id>:<prefix>`, so a
+  deleted sample's name isn't given again. An item stays waiting (in
+  `session.info`) until it has a type or a name for the rest of the
+  transaction, as an import flushes the row before filling it in; one an
+  undo restores has its id and keeps its own. `item_from_form` doesn't
+  require the name of a new item a prefix will name. The New dialog shows
+  the name (`type_codes`, `data-type-codes`). `InventoryItem.number` is
+  untouched: the # stays per database, for mentions, labels and links.
 - **Split notes:** the selection bar's `action=split_notes` runs
   `inventory_service.split_notes()` on each ticked row: the notes split on
   `;` (an allele with no header after one, `Ai9/+`, joins the part before

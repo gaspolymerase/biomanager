@@ -69,6 +69,9 @@
       </div>
     {% endif %}
   </div>
+  {% if m.choosing_types %}
+    {% include "inventory/_type_picker.html" %}
+  {% endif %}
   {% if m.tabs %}
     {# All · one tab per type (Configure's Type choices) · +. A tab shows
        that type's entries with the columns used for it, and the boxes that
@@ -81,6 +84,7 @@
            title="{{ _('Every %(noun)s, with every column', noun=noun) }}">{{ _('All') }} <span class="dt-chip-count">{{ listed_all }}</span></a>
         {% for t in m.tabs %}
           <a class="dt-chip no-underline" href="{{ url_for('inventory.module', key=key, type=t, **others) }}" {% if t == tab %}aria-current="page"{% endif %}
+             {% if m.prefix_for(t) %}title="{{ _('Numbered %(first)s, %(second)s…', first=m.prefix_for(t) ~ '1', second=m.prefix_for(t) ~ '2') }}"{% endif %}
              data-type-tab="{{ t }}">{{ t|tr(m.kind) }} <span class="dt-chip-count">{{ tab_counts[t] }}</span></a>
         {% endfor %}
         {% if can_add_type %}
@@ -427,7 +431,7 @@
     <header class="record-dialog-head">
       <div>
         <h3 id="item-dialog-title" data-record-title>{{ _('New %(noun)s', noun=noun) }}</h3>
-        <p class="record-dialog-sub" data-new-only data-next-number="{{ next_number }}">{% trans database=mlabel, noun=noun, number=next_number %}{{ database }} · a new {{ noun }} gets <span data-number-span>#{{ number }}</span>.{% endtrans %}{% if m.required %} {% trans %}Fields marked <span class="req-star">*</span> are needed.{% endtrans %}{% endif %}</p>
+        <p class="record-dialog-sub" data-new-only data-next-number="{{ next_number }}"{% if type_codes %} data-type-codes='{{ type_codes|tojson }}'{% endif %}>{% trans database=mlabel, noun=noun, number=next_number %}{{ database }} · a new {{ noun }} gets <span data-number-span>#{{ number }}</span>.{% endtrans %}{% if type_codes %} <span data-code-note hidden></span>{% endif %}{% if m.required %} {% trans %}Fields marked <span class="req-star">*</span> are needed.{% endtrans %}{% endif %}</p>
       </div>
       <button type="button" class="modal-close" data-on-click="close-dialog" aria-label="{{ _('Close') }}">{{ icon('close') }}</button>
     </header>
@@ -571,6 +575,8 @@
       </header>
       <div class="record-dialog-body">
         <label>{{ _('Name') }} <input name="name" required maxlength="80" autocomplete="off" placeholder="{{ _('e.g. slides, plasma, CSF') }}"></label>
+        <label>{{ _('Prefix') }} <input name="prefix" maxlength="12" autocomplete="off" class="field font-mono" placeholder="{{ _('e.g. PL') }}"></label>
+        <p class="record-wide field-hint normal-case tracking-normal">{{ _('Its %(nouns)s are numbered on their own after the prefix: PL1, PL2… Leave it empty to name them yourself.', nouns=nouns) }}</p>
       </div>
       <footer class="record-dialog-foot">
         <button type="button" class="btn" data-on-click="close-dialog">{{ _('Cancel') }}</button>

@@ -312,6 +312,11 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
   const span = dialog.querySelector('[data-number-span]');
   const submit = dialog.querySelector('[data-record-submit]');
   const noun = INV_WORDS.noun, plural = INV_WORDS.nouns;
+  // A type with a prefix names a new one left without a name (tissue B523).
+  const codes = JSON.parse(sub.dataset.typeCodes || '{}');
+  const codeNote = sub.querySelector('[data-code-note]');
+  const category = form.elements.category;
+  const codeOf = (c, n) => c.prefix + (c.width > 1 ? String(n).padStart(c.width, '0') : String(n));
   let nameRequired = false;
   let isNew = true;
   const sync = () => {
@@ -319,14 +324,28 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
     if (pasted) count.value = pasted;
     count.readOnly = pasted > 0;
     nameLabel.hidden = isNew && pasted > 0;
-    name.required = nameRequired && !(isNew && pasted > 0);
     const k = Math.max(1, Number(count.value) || 1);
     const first = Number(sub.dataset.nextNumber);
     span.textContent = k > 1 ? `#${first}–#${first + k - 1}` : `#${first}`;
+    const typed = String((category && category.value) || '').toLowerCase();
+    const code = isNew && !pasted ? Object.entries(codes).find(([c]) => c.toLowerCase() === typed) : null;
+    const c = code && code[1];
+    name.required = nameRequired && !(isNew && pasted > 0) && !c;
+    name.placeholder = c ? codeOf(c, c.next) : '';
+    if (codeNote) {
+      codeNote.hidden = !c || name.value.trim() !== '';
+      if (c) {
+        codeNote.textContent = k > 1
+          ? t('Left unnamed, they are named %(first)s–%(last)s.', { first: codeOf(c, c.next), last: codeOf(c, c.next + k - 1) })
+          : t('Left unnamed, it is named %(code)s.', { code: codeOf(c, c.next) });
+      }
+    }
     if (isNew) submit.textContent = k > 1 ? t('Create %(n)s %(nouns)s', { n: k, nouns: plural }) : t('Create %(noun)s', { noun });
   };
   count.addEventListener('input', sync);
   names.addEventListener('input', sync);
+  name.addEventListener('input', sync);
+  if (category) category.addEventListener('change', sync);
   dialog.addEventListener('record-dialog:open', (event) => {
     isNew = Boolean((event.detail || {}).isNew);
     // Required to add one; an old one that never had it can still be saved.
@@ -427,3 +446,24 @@ window.addEventListener('load', () => {
     search.dispatchEvent(new Event('input', { bubbles: true }));
   }
 });
+
+/* Choosing the first types (a new Samples): each row shows how its
+   entries will be numbered as the prefix is typed, and typing a prefix
+   ticks the type. */
+(function () {
+  const picker = document.querySelector('[data-type-picker]');
+  if (!picker) return;
+  picker.querySelectorAll('[data-type-pick]').forEach((row) => {
+    const prefix = row.querySelector('[data-type-prefix]');
+    const example = row.querySelector('[data-type-example]');
+    const on = row.querySelector('[data-type-on]');
+    const own = row.querySelector('input[type="text"][name$="_name"]');   // a type of the lab's own
+    const show = () => {
+      const p = prefix.value.replace(/\s+/g, '');
+      example.textContent = p ? `${p}1, ${p}2, ${p}3…` : (own && !own.value.trim() ? '' : t('named by hand'));
+    };
+    prefix.addEventListener('input', () => { if (on) on.checked = true; show(); });
+    if (own) own.addEventListener('input', show);
+    show();
+  });
+})();

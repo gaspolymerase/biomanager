@@ -45,13 +45,17 @@
   </tr>
 {% endmacro %}
 
-{% macro choice_row(name, i, value, n) %}
+{% macro choice_row(name, i, value, n, prefixes=none) %}
   <tr data-choice-row data-count="{{ n }}">
     <td>
       <input type="hidden" name="{{ name }}_{{ i }}_was" value="{{ value }}" data-choice-was>
       <input type="text" name="{{ name }}_{{ i }}_value" value="{{ value }}" maxlength="{{ 40 if name == 'statuses' else 80 }}"
              aria-label="{{ _('Name') }}" data-choice-value {% if not value %}placeholder="{{ _('New…') }}"{% endif %}>
     </td>
+    {% if prefixes is not none %}
+      <td><input type="text" name="{{ name }}_{{ i }}_prefix" value="{{ prefixes.get(value, '') }}" maxlength="12" class="field w-24 font-mono"
+                 aria-label="{{ _('Prefix') }}" autocomplete="off"></td>
+    {% endif %}
     <td class="choice-usage">{% if n %}{{ _('%(n)s %(noun)s', n=n, noun=m.item_noun|tr('inventory') if n == 1 else m.item_noun_plural|tr('inventory')) }}{% elif value %}<span class="text-sand-400">{{ _('unused') }}</span>{% endif %}</td>
     <td class="text-center">{% if value %}<input type="checkbox" name="{{ name }}_{{ i }}_remove" value="1" aria-label="{{ _('Remove %(value)s', value=value|tr('inventory')) }}" data-choice-remove>{% endif %}</td>
     <td class="choice-replace">
@@ -64,15 +68,15 @@
   </tr>
 {% endmacro %}
 
-{% macro choice_editor(name, values, counts, title, add_label, hint) %}
+{% macro choice_editor(name, values, counts, title, add_label, hint, prefixes=none) %}
   {% set orphans = counts.keys() | reject('in', values) | reject('equalto', '') | list %}
-  <div class="field-label" data-choice-editor="{{ name }}">
+  <div class="field-label" data-choice-editor="{{ name }}"{% if prefixes is not none %} data-choice-prefixes{% endif %}>
     <span>{{ title }}</span>
     <table class="field-editor choice-editor">
-      <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Used by') }}</th><th>{{ _('Remove') }}</th><th></th></tr></thead>
+      <thead><tr><th>{{ _('Name') }}</th>{% if prefixes is not none %}<th title="{{ _('New entries of this type left without a name are numbered after it: T1, T2…') }}">{{ _('Prefix') }}</th>{% endif %}<th>{{ _('Used by') }}</th><th>{{ _('Remove') }}</th><th></th></tr></thead>
       <tbody data-choice-body>
-        {% for v in values %}{{ choice_row(name, loop.index0, v, counts.get(v, 0)) }}{% endfor %}
-        {{ choice_row(name, values|length, '', 0) }}
+        {% for v in values %}{{ choice_row(name, loop.index0, v, counts.get(v, 0), prefixes) }}{% endfor %}
+        {{ choice_row(name, values|length, '', 0, prefixes) }}
       </tbody>
     </table>
     <input type="hidden" name="{{ name }}_count" value="{{ values|length + 1 }}" data-choice-count>
@@ -128,8 +132,15 @@
       <header class="card-head"><h2>{{ icon('tag') }} {{ _('Choices') }}</h2></header>
       <div class="grid grid-cols-1 gap-4 p-4 lg:grid-cols-2">
         <label class="field-label lg:col-span-2 lg:max-w-[320px]">{{ _('Category column is called') }} <input name="category_label" value="{{ m.category_label }}"></label>
-        {{ choice_editor('categories', m.categories, category_counts, _('%(label)s choices', label=m.category_label|tr('inventory')), _('Add a choice'),
-                         _('No choices means free text. Rename one and every %(noun)s with it follows.', noun=noun)) }}
+        {% if m.has('tabs') %}
+          {{ choice_editor('categories', m.categories, category_counts, _('%(label)s choices', label=m.category_label|tr('inventory')), _('Add a choice'),
+                           _('No choices means free text. Rename one and every %(noun)s with it follows.', noun=noun) ~ ' ' ~
+                           _('A new %(noun)s left without a name is numbered after its prefix, each type on its own (T1, T2…; BL1…); without a prefix it is not.', noun=noun),
+                           prefixes=m.prefixes) }}
+        {% else %}
+          {{ choice_editor('categories', m.categories, category_counts, _('%(label)s choices', label=m.category_label|tr('inventory')), _('Add a choice'),
+                           _('No choices means free text. Rename one and every %(noun)s with it follows.', noun=noun)) }}
+        {% endif %}
         {{ choice_editor('statuses', m.statuses, status_counts, _('Statuses'), _('Add a status'),
                          _('In workflow order; the first is given to new entries, and these are the board’s columns. Rename one and every %(noun)s on it follows (no dates are stamped). None means no status.', noun=noun)) }}
       </div>

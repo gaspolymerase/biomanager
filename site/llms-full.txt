@@ -1045,7 +1045,13 @@ One engine, ten starting points, each with its own columns and statuses. Viruses
 
 ### Samples by type
 
-Tissue blocks and tubes of DNA are kept differently and described differently, so Samples has a tab for each type above the sheet: **All**, then **tissue**, **blood**, **serum**, **DNA**, **RNA**, **protein** and the rest, each with how many it holds.
+Tissue blocks and tubes of DNA are kept differently and described differently, so Samples has a tab for each type above the sheet: **All**, then one per type the lab keeps (**tissue**, **DNA**…), each with how many it holds.
+
+A new Samples starts with no types. The first time it is opened it asks **Which samples does the lab keep?**: tick the ones you need (tissue, blood, serum, DNA, RNA, protein, organoid, cells, other), add any of your own, and give each a **Prefix**, then **Use these types**. Anyone who uses Samples can do it, once; afterwards **+** adds a type and **Configure** changes them.
+
+- **Each type is numbered on its own.** A new sample left without a Sample ID is named after its type's prefix and the next number of that type: tissue T1, T2, T3…, blood BL1, BL2…, whoever adds it and however (the dialog, **Add many**, an import, an experiment's samples). The dialog says the name before you save. A Sample ID you type is kept, and moves the count on (type T41 and the next tissue is T42); a deleted sample's name is never given again, as its tube may still say it. A type with no prefix isn't numbered: you name its samples yourself. The **#** column stays the number of each sample in Samples as a whole, which notebook links and labels go by.
+
+- **Change a prefix** in **Configure**, under *Type choices*: the **Prefix** beside each type. A lab that already named its tissue B1, B2… gives tissue the prefix B, and the next tissue sample is one past the highest B number. Two types can't share a prefix, and a prefix can't end in a digit.
 
 - **A tab shows only its own columns.** **tissue** has *Tissue* (the organ: lung, DRG…), *Fixation* (fresh frozen, 4% PFA, formalin, RNAlater…) and *Orientation* (sagittal, coronal…), and no 260/280; **DNA** and **RNA** have the concentration, its unit, 260/280, 260/230 and volume, and no fixation. **All** shows every column, with a dash where one isn't used for that sample's type.
 
@@ -1055,7 +1061,7 @@ Tissue blocks and tubes of DNA are kept differently and described differently, s
 
 - **Genotype** comes from the source mouse: left empty, it shows that mouse's genotype from the colony, in grey, and follows it when the mouse is re-genotyped. Type one to give the sample its own. Search finds samples by either.
 
-- **+** at the end of the tabs adds a type (slides, plasma, CSF…): anyone can, and it gets a tab of its own with the columns every type has. Renaming or removing a type is in **Configure**, under *Type choices*.
+- **+** at the end of the tabs adds a type (slides, plasma, CSF…), with its prefix: anyone can, and it gets a tab of its own with the columns every type has. Renaming or removing a type is in **Configure**, under *Type choices*.
 
 - Which columns a type has is each column's **Used for** in **Configure**: the types it is for, separated by commas, or empty for every type. Any inventory can have tabs: tick **A tab for each type** under *What it tracks*.
 

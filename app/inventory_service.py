@@ -73,6 +73,25 @@ class ModuleView:
         return self.settings["category_label"]
 
     @property
+    def prefixes(self) -> dict[str, str]:
+        """{type: prefix} of the types numbered on their own (tissue T1, T2…)."""
+        return self.settings["prefixes"]
+
+    def prefix_for(self, category) -> str:
+        """The prefix a new entry of this category is named after, or ""."""
+        return prefix_for(self.settings["prefixes"], category)
+
+    @property
+    def offered_types(self) -> dict[str, str]:
+        """{type: suggested prefix} a lab picks its first types from (Samples)."""
+        return dict((presets.PRESETS.get(self.row.kind) or {}).get("offered_types") or {})
+
+    @property
+    def choosing_types(self) -> bool:
+        """It has a tab per type but no types yet: the page asks for them."""
+        return self.has("tabs") and not self.categories
+
+    @property
     def name_label(self) -> str:
         return {"samples": "Sample ID", "orders": "Item", "antibodies": "Target", "viruses": "Virus",
                 "cell_lines": "Cell line"}.get(self.row.kind, "Name")
@@ -211,6 +230,136 @@ def builtin_labels(session) -> dict[str, str]:
 def next_number(session, module_id: int) -> int:
     top = session.scalar(select(func.max(InventoryItem.number)).where(InventoryItem.module_id_fk == module_id))
     return (top or 0) + 1
+
+
+# ---------------------------------------------------------------------------
+# Numbered by type: tissue T1, T2…, blood BL1… (settings "prefixes")
+# ---------------------------------------------------------------------------
+#
+# A new entry of a type with a prefix, left without a name, is named the
+# prefix and one past the highest number after it in this database (any
+# type's entries count, so a sample moved to another type keeps its name
+# and nothing gets it twice), and past any it has handed out before: a
+# deleted sample's name isn't given again (its tube label still says it).
+# The # stays the database's own row number, which notebook links and
+# labels go by.
+
+CODE_HIGH = "code_high:{module}:{prefix}"   # app_settings: the highest number handed out after a prefix
+
+
+def prefix_for(prefixes: dict[str, str], category) -> str:
+    category = str(category or "").strip().casefold()
+    if not category:
+        return ""
+    return next((p for c, p in prefixes.items() if c.casefold() == category), "")
+
+
+def code_number(prefix: str, name) -> tuple[int, int] | None:
+    """(number, digits) of a name that is the prefix and a number ("B12"
+    after "B": (12, 2); "T007": (7, 3)), any case; None for any other."""
+    name = str(name or "").strip()
+    if not prefix or len(name) <= len(prefix) or name[:len(prefix)].casefold() != prefix.casefold():
+        return None
+    digits = name[len(prefix):]
+    return (int(digits), len(digits)) if digits.isascii() and digits.isdigit() else None
+
+
+def code_text(prefix: str, number: int, width: int = 0) -> str:
+    """B523; T008 where the type's numbers are written with leading zeros."""
+    return f"{prefix}{number:0{width}d}" if width > 1 else f"{prefix}{number}"
+
+
+def _highest_code(session, module_id: int, prefix: str, also=()) -> tuple[int, int]:
+    """(highest number, its width when written with leading zeros, else 0)
+    after this prefix: in the database's names, in `also` (names not yet
+    written) and among those handed out before."""
+    query = select(InventoryItem.name).where(InventoryItem.module_id_fk == module_id)
+    if prefix.isascii():   # the database lowers ASCII alike everywhere
+        like = prefix.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        query = query.where(func.lower(InventoryItem.name).like(like, escape="\\"))
+    best, width = 0, 0
+    for name in (*session.scalars(query), *also):
+        found = code_number(prefix, name)
+        if found and found[0] > best:
+            best, width = found[0], (found[1] if str(name).strip()[len(prefix):].startswith("0") else 0)
+    stored = get_setting(session, CODE_HIGH.format(module=module_id, prefix=prefix.casefold()), "")
+    if stored.isdigit() and int(stored) > best:
+        best = int(stored)
+    return best, width
+
+
+def type_codes(session, mv) -> dict[str, dict]:
+    """{type: {"prefix", "next", "width"}}: what the next entry of each
+    numbered type is named, without taking it (the New dialog says it)."""
+    out = {}
+    for category, prefix in mv.prefixes.items():
+        best, width = _highest_code(session, mv.id, prefix)
+        out[category] = {"prefix": prefix, "next": best + 1, "width": width}
+    return out
+
+
+_NAMING = "items_named_by_type"
+
+
+@event.listens_for(Session, "before_flush", insert=True)
+def _new_entries_named_by_type(session, _context, _instances) -> None:
+    """However an entry is made (the dialog, Add many, an import, the API,
+    an experiment's samples, a proposal), one left without a name, of a type
+    with a prefix, is named by it. An entry stays waiting until it has its
+    type (an import writes the row before it fills it in) or a name of its
+    own, for the rest of the transaction. One restored by an undo keeps its
+    own (it has its id already)."""
+    state = session.info.get(_NAMING)
+    fresh = [o for o in session.new if isinstance(o, InventoryItem) and o.id is None]
+    if not fresh and not state:
+        return
+    state = session.info.setdefault(_NAMING, {"waiting": {}, "next": {}})
+    waiting, upcoming = state["waiting"], state["next"]
+    for obj in fresh:
+        waiting.setdefault(id(obj), obj)
+    if not waiting:
+        return
+    items = [o for o in (*session.new, *session.dirty) if isinstance(o, InventoryItem)]
+    # A name typed since a number was worked out, past it, moves it on.
+    for (module_id, _folded), slot in upcoming.items():
+        for obj in items:
+            found = code_number(slot["prefix"], obj.name) if obj.module_id_fk == module_id else None
+            if found and found[0] >= slot["n"]:
+                slot["n"] = found[0] + 1
+    prefixes: dict[int, dict] = {}
+    handed: dict[str, int] = {}                  # app_settings key: highest handed out now
+    # Only those changed since the last flush can have a type or name now.
+    todo = sorted(((id(o), o) for o in items if id(o) in waiting), key=lambda kv: (kv[1].number or 0, kv[0]))
+    for key, obj in todo:
+        if (obj.name or "").strip():
+            del waiting[key]                     # named by whoever made it
+            continue
+        if obj.module_id_fk not in prefixes:
+            module = session.get(InventoryModule, obj.module_id_fk) if obj.module_id_fk else None
+            prefixes[obj.module_id_fk] = presets.normalise_settings(module.settings)["prefixes"] if module else {}
+        prefix = prefix_for(prefixes[obj.module_id_fk], obj.category)
+        if not prefix:
+            if not prefixes[obj.module_id_fk] or (obj.category or "").strip():
+                del waiting[key]                 # not numbered by type, or a type that isn't
+            continue                             # no type yet: an import may give it one
+        slot = upcoming.get((obj.module_id_fk, prefix.casefold()))
+        if slot is None:
+            best, width = _highest_code(session, obj.module_id_fk, prefix,
+                                        also=[o.name for o in items if o.module_id_fk == obj.module_id_fk])
+            slot = upcoming[(obj.module_id_fk, prefix.casefold())] = {"prefix": prefix, "n": best + 1, "width": width}
+        obj.name = code_text(prefix, slot["n"], slot["width"])
+        handed[CODE_HIGH.format(module=obj.module_id_fk, prefix=prefix.casefold())] = slot["n"]
+        slot["n"] += 1
+        del waiting[key]
+    for setting, n in handed.items():           # once each: a pending row isn't found by a second get
+        set_setting(session, setting, str(n))
+
+
+@event.listens_for(Session, "after_transaction_end")
+def _forget_naming(session, transaction) -> None:
+    """Committed, rolled back or closed: the next transaction counts afresh."""
+    if transaction.parent is None:
+        session.info.pop(_NAMING, None)
 
 
 def rack_label(item: InventoryItem) -> str:

@@ -214,6 +214,8 @@ def item_from_form(session, mv, item: InventoryItem, form, creating: bool = Fals
     # (but one that never had it can still be saved).
     # A column not used for its type (a 260/280 on tissue) isn't asked for.
     unused = {f"attr_{f['key']}" for f in mv.fields if not presets.used_for(f, item.category)}
+    if creating and mv.prefix_for(item.category):
+        unused.add("name")                     # left empty, it is named after its type's prefix
     missing = [_tr(label) for key, label in mv.required_labels.items()
                if not _column_value(item, key) and (creating or was[key]) and key not in unused]
     if missing:

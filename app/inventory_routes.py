@@ -694,6 +694,8 @@ def _sheet_context(session, key: str, only: list[int] | None = None) -> dict:
         "racks": racks,
         "tab_counts": tab_counts, "listed_all": listed_all,
         "can_add_type": mv.has("tabs"),
+        # What a new entry of each numbered type is named (the New dialog).
+        "type_codes": svc.type_codes(session, mv) if mv.prefixes else {},
         "col_sig": format(zlib.crc32(layout.encode()), "x"),
         "manageable_racks": {r.id for r in racks if access.can_edit_rack(r)},
         "places": svc.places_in_use(session) if mv.has("storage") else [],
@@ -1923,14 +1925,21 @@ def configure(key: str):
                 row.icon = form["icon"]
             row.enabled = "1" in form.getlist("enabled")
             lines = lambda name: [x.strip() for x in (form.get(name) or "").replace(",", "\n").split("\n") if x.strip()]
-            choices, plans = {}, {}
+            choices, plans, choice_rows = {}, {}, {}
             for name, (column, limit) in svc.CHOICE_COLUMNS.items():
-                rows = _choice_rows(form, name, limit)
+                rows = choice_rows[name] = _choice_rows(form, name, limit)
                 if rows is None:  # an older form: a plain list, nothing relabelled
                     choices[name] = lines(name)
                     continue
                 plan = svc.plan_choices(rows, svc.choice_counts(session, row.id, column))
                 choices[name], plans[column] = plan.values, plan
+            prefixes = _prefixes_from(choice_rows.get("categories"), choices["categories"],
+                                      presets.normalise_settings(row.settings)["prefixes"])
+            prefix_problems = presets.prefix_problems(prefixes)
+            if prefix_problems:
+                session.rollback()
+                flash(gettext("Not saved: %(reason)s", reason=_sentences(*prefix_problems)), "error")
+                return redirect(url_for("inventory.configure", key=key))
             problems = [(column, old) for column, plan in plans.items() for old in plan.problems]
             if problems:
                 session.rollback()
@@ -1946,7 +1955,7 @@ def configure(key: str):
             settings = json.dumps(presets.normalise_settings({
                 "features": form.getlist("features"),
                 "category_label": (form.get("category_label") or "Category").strip(),
-                "categories": choices["categories"], "statuses": choices["statuses"],
+                "categories": choices["categories"], "prefixes": prefixes, "statuses": choices["statuses"],
                 "fields": _fields_from_form(form, choices["categories"],
                                             {old: new for old, (new, _how) in plans["category"].relabel.items()}
                                             if "category" in plans else {}),
@@ -2012,12 +2021,58 @@ def add_type(key: str):
         if found:
             flash(gettext("%(type)s is already one of them.", type=_tr(found)), "info")
             return redirect(url_for("inventory.module", key=row.key, type=found))
+        prefix = presets.clean_prefix(request.form.get("prefix"))
+        prefixes = {**mv.prefixes, **({name: prefix} if prefix else {})}
+        problems = presets.prefix_problems(prefixes)
+        if problems:
+            return _done(key, error=gettext("Not saved: %(reason)s", reason=_sentences(*problems)))
         settings = presets.load(row.settings)
         settings["categories"] = [*mv.categories, name]
+        settings["prefixes"] = prefixes
         row.settings = json.dumps(settings)
         session.commit()
         flash(gettext("Added %(type)s. Its tab shows the columns every type has; Configure can give it columns of its own.", type=name), "success")
         return redirect(url_for("inventory.module", key=row.key, type=name))
+
+
+MAX_TYPES = 40
+
+
+@bp.route("/<key>/types/choose", methods=["POST"])
+def choose_types(key: str):
+    """The types a new Samples starts with: it has none until someone who
+    uses it ticks the kinds the lab keeps (each with the prefix its numbers
+    go after) and adds any of its own. Afterwards + adds one and Configure
+    changes them."""
+    form = request.form
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        mv = svc.view(row)
+        if not mv.has("tabs"):
+            return _done(key, error=gettext("%(name)s has no type tabs.", name=_tr(row.label)))
+        if mv.categories:
+            return _done(key, error=gettext("%(name)s has its types already: + adds one, Configure changes them.",
+                                            name=_tr(row.label)))
+        chosen: dict[str, str] = {}
+        for i in range(_int(form.get("types_count"), 0, 0, MAX_TYPES)):
+            name = " ".join((form.get(f"types_{i}_name") or "").split())[:80]
+            if not name or not form.get(f"types_{i}_on") or name.casefold() in {c.casefold() for c in chosen}:
+                continue
+            chosen[name] = presets.clean_prefix(form.get(f"types_{i}_prefix"))
+        if not chosen:
+            return _done(key, error=gettext("Tick at least one %(label)s, or add one of your own.",
+                                            label=_tr(mv.category_label).lower()))
+        problems = presets.prefix_problems(chosen)
+        if problems:
+            return _done(key, error=gettext("Not saved: %(reason)s", reason=_sentences(*problems)))
+        settings = presets.load(row.settings)
+        settings["categories"] = list(chosen)
+        settings["prefixes"] = {name: prefix for name, prefix in chosen.items() if prefix}
+        row.settings = json.dumps(settings)
+        session.commit()
+        flash(gettext("Your %(label)s tabs: %(types)s. + adds another; Configure renames them or changes a prefix.",
+                      label=_tr(mv.category_label).lower(), types=gettext(", ").join(chosen)), "success")
+        return redirect(url_for("inventory.module", key=row.key))
 
 
 def _n(count: int, mv) -> str:
@@ -2032,8 +2087,26 @@ def _choice_rows(form, name: str, limit: int) -> list[dict] | None:
     return [{"value": (form.get(f"{name}_{i}_value") or "").strip()[:limit],
              "was": (form.get(f"{name}_{i}_was") or "").strip(),
              "remove": bool(form.get(f"{name}_{i}_remove")),
-             "replace": (form.get(f"{name}_{i}_replace") or "").strip()}
+             "replace": (form.get(f"{name}_{i}_replace") or "").strip(),
+             "prefix": presets.clean_prefix(form.get(f"{name}_{i}_prefix")),
+             "has_prefix": f"{name}_{i}_prefix" in form}
             for i in range(_int(form.get(f"{name}_count"), 0, 0, 200))]
+
+
+def _prefixes_from(rows: list[dict] | None, categories: list[str], before: dict[str, str]) -> dict[str, str]:
+    """{type: prefix} from Configure's type rows: a renamed type keeps its
+    prefix unless the row changes it; a form without the prefix column
+    (an inventory without type tabs) keeps the ones it had."""
+    if rows is None:
+        return {c: p for c, p in before.items() if c in categories}
+    out = {}
+    for r in rows:
+        if r["remove"] or not r["value"] or r["value"] not in categories or r["value"] in out:
+            continue
+        prefix = r["prefix"] if r["has_prefix"] else svc.prefix_for(before, r["was"] or r["value"])
+        if prefix:
+            out[r["value"]] = prefix
+    return out
 
 
 @bp.route("/<key>/delete", methods=["POST"])

@@ -14,6 +14,9 @@ An inventory module's `settings` JSON holds:
                 tabs      a tab for each category above the sheet, each
                           showing the columns used for it
   categories  the choices for the category column ("Type", "Kind"…)
+  prefixes    {category: prefix}: a new entry of that category left without
+              a name is named after it, each category counting on its own
+              (tissue T1, T2…; blood BL1…; inventory_service.name_by_type)
   category_label
   statuses    the status workflow, first is the default
   fields      extra, preset-specific columns kept in `attrs`:
@@ -84,6 +87,13 @@ SAMPLE_DETAILS = [
      "width": 96, "types": ["tissue"]},
 ]
 
+# The kinds of sample a lab is offered when it starts its Samples: it ticks
+# the ones it keeps (a new Samples has none until then), each with the
+# prefix its numbers are given after, which it can change.
+SAMPLE_TYPES = {"tissue": "T", "blood": "BL", "serum": "SE", "DNA": "D", "RNA": "R", "protein": "P",
+                "organoid": "O", "cells": "C", "other": "X"}
+PREFIX_MAX = 12
+
 PRESETS: dict[str, dict] = {
     "samples": {
         "label": "Samples",
@@ -92,7 +102,9 @@ PRESETS: dict[str, dict] = {
         "blurb": "Harvested tissue, blood, DNA and RNA, traced back to the animal they came from and kept in freezer boxes.",
         "features": ["storage", "sharing", "tabs"],
         "category_label": "Type",
-        "categories": ["tissue", "blood", "serum", "DNA", "RNA", "protein", "organoid", "cells", "other"],
+        # None until the lab picks its own from these (inventory/_type_picker.html).
+        "categories": [],
+        "offered_types": SAMPLE_TYPES,
         "statuses": ["available", "in use", "used up", "discarded"],
         "fields": [
             # Wider than a plain column: the cell holds the colony and the
@@ -308,6 +320,30 @@ def load(raw) -> dict:
     return value if isinstance(value, dict) else {}
 
 
+def clean_prefix(raw) -> str:
+    """A prefix as kept: no spaces, at most PREFIX_MAX characters."""
+    return "".join(str(raw or "").split())[:PREFIX_MAX]
+
+
+def prefix_problems(prefixes: dict[str, str]) -> list[str]:
+    """Why these {type: prefix} can't number the types apart, in words:
+    a prefix ending in a digit (B1 then 2 reads as B12), or two types
+    sharing one."""
+    from .i18n import gettext
+    out, seen = [], {}
+    for category, prefix in prefixes.items():
+        if not prefix:
+            continue
+        if prefix[-1].isdigit():
+            out.append(gettext("The prefix %(prefix)s ends in a digit, so its numbers would run into it; end it in a letter or a dash.",
+                               prefix=prefix))
+        other = seen.setdefault(prefix.casefold(), category)
+        if other != category:
+            out.append(gettext("%(first)s and %(second)s both have the prefix %(prefix)s; give each its own.",
+                               first=other, second=category, prefix=prefix))
+    return out
+
+
 def normalise_settings(raw) -> dict:
     """Settings with every key present and junk dropped."""
     s = load(raw)
@@ -322,10 +358,14 @@ def normalise_settings(raw) -> dict:
             "in_table": f.get("in_table", True) is not False,
             "types": [str(t) for t in f.get("types") or [] if str(t).strip()],
         })
+    categories = [str(c) for c in s.get("categories") or []]
+    prefixes = s.get("prefixes") if isinstance(s.get("prefixes"), dict) else {}
     return {
         "features": [x for x in (s.get("features") or []) if x in FEATURES],
         "category_label": str(s.get("category_label") or "Category"),
-        "categories": [str(c) for c in s.get("categories") or []],
+        "categories": categories,
+        # Only a type still on the list keeps its prefix.
+        "prefixes": {c: clean_prefix(prefixes[c]) for c in categories if clean_prefix(prefixes.get(c))},
         "statuses": [str(c) for c in s.get("statuses") or []],
         "fields": fields,
         # None: never chosen, so the preset's list applies (ModuleView.required).
@@ -337,7 +377,8 @@ def normalise_settings(raw) -> dict:
 def preset_settings(key: str) -> dict:
     preset = PRESETS.get(key) or PRESETS["custom"]
     return normalise_settings({k: preset.get(k) for k in
-                               ("features", "category_label", "categories", "statuses", "fields", "required")})
+                               ("features", "category_label", "categories", "prefixes", "statuses", "fields",
+                                "required")})
 
 
 # Built-in columns that can be made required: (form name, feature it needs, label).

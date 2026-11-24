@@ -720,8 +720,14 @@ for i, (name, vector, serotype, plasmid, promoter, payload, titer, status) in en
 
 samples = keys_of("samples")
 if samples:
-    for name, ref, kind in (("Brain, perfused", "", "tissue"), ("Tail clip", "", "tissue")):
-        sam.post(f"/inventory/{samples}/items/save", data={"id": "", "name": name, "attr_collected_on": ago(3),
+    # The types this lab keeps, each numbered on its own (tissue T1, T2…).
+    picked = {"tissue": "T", "blood": "BL", "DNA": "D", "RNA": "R"}
+    sam.post(f"/inventory/{samples}/types/choose", data={"types_count": str(len(picked)), **{
+        k: v for i, (kind, prefix) in enumerate(picked.items())
+        for k, v in ((f"types_{i}_name", kind), (f"types_{i}_on", "1"), (f"types_{i}_prefix", prefix))}})
+    for tissue, kind in (("Brain, perfused", "tissue"), ("Tail clip", "tissue")):
+        sam.post(f"/inventory/{samples}/items/save", data={"id": "", "name": "", "category": kind,
+                                                           "attr_tissue": tissue, "attr_collected_on": ago(3),
                                                            "attr_storage_temp": "4 °C"})
 
 # ------------------------------------------------------------------ calendar
