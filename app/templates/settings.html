@@ -54,7 +54,7 @@
       </span>
     </a>
     <div class="set-group-head">{{ _('You') }}</div>
-    {{ pane_link('appearance', 'type', _('Appearance & language'), sub=(_('Solid') if ui_look == 'solid' else _('Liquid Glass')) ~ ' · ' ~ ('Inter' if ui_font == 'inter' else (_('System font') if ui_font == 'system' else 'Geist'))) }}
+    {{ pane_link('appearance', 'type', _('Appearance & language'), sub=({'solid': _('Solid'), 'mono': _('Mono')}.get(ui_look) or _('Liquid Glass')) ~ ' · ' ~ ('Inter' if ui_font == 'inter' else (_('System font') if ui_font == 'system' else 'Geist'))) }}
     {{ pane_link('notifications', 'bell', _('Notifications')) }}
     {% set show_assistant = api_tokens_card() or proposals_pending is not none or not current_user.expires_at %}
     {% if show_assistant %}{{ pane_link('assistant', 'sparkle', _('AI assistant & tokens')) }}{% endif %}
@@ -257,10 +257,11 @@
           </select>
         </label>
         <label class="set-row">
-          <span class="set-label"><b>{{ _('Look') }}</b><small>{{ _('Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Only for you.') }}</small></span>
+          <span class="set-label"><b>{{ _('Look') }}</b><small>{{ _('Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Mono: black and white, no glass, colour only for warnings. Only for you.') }}</small></span>
           <select name="ui_look" data-ui="look" data-ui-look>
-            <option value="glass" {% if ui.look != 'solid' %}selected{% endif %}>{{ _('Liquid Glass') }}</option>
+            <option value="glass" {% if ui.look not in ('solid', 'mono') %}selected{% endif %}>{{ _('Liquid Glass') }}</option>
             <option value="solid" {% if ui.look == 'solid' %}selected{% endif %}>{{ _('Solid') }}</option>
+            <option value="mono" {% if ui.look == 'mono' %}selected{% endif %}>{{ _('Mono') }}</option>
           </select>
         </label>
       </form>

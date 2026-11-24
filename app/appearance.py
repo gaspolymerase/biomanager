@@ -18,7 +18,8 @@ it takes the colour.
 
 The colour also becomes the app's accent (`--color-brand-*`), so buttons,
 links and selections match the icon. Jade, the default, has the accent that
-tailwind.css ships with, so it needs no override.
+tailwind.css ships with, so it needs no override. Ink is the one colour that
+is no colour: black, and white in dark mode (INK_LIGHT, INK_DARK).
 
 Each person's choices are kept in app_settings under "<name>:<username>",
 like the home layout, so they follow the person and need no schema change:
@@ -54,6 +55,15 @@ def _hex(rgb) -> str:
 def _rgb(hex_: str):
     hex_ = hex_.lstrip("#")
     return tuple(int(hex_[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _luma(hex_: str) -> float:
+    """Relative luminance, 0 for black to 1 for white."""
+    def lin(c):
+        c /= 255
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (lin(c) for c in _rgb(hex_))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
 def _mix(a: str, b: str, t: float) -> str:
@@ -95,7 +105,7 @@ class Palette:
 
 
 # Eight colours of about the same strength, white text clear on each;
-# graphite for whoever wants no colour.
+# graphite for whoever wants a quiet one, and ink for black and white.
 PALETTES: dict[str, Palette] = {
     "jade":     Palette("Jade",      "#3ED3B6", "#0A8776", "#17A38F"),
     "ocean":    Palette("Ocean",     "#6FB0FF", "#2460CC", "#2C6FE0"),
@@ -105,6 +115,7 @@ PALETTES: dict[str, Palette] = {
     "coral":    Palette("Coral",     "#FF9E7A", "#CC4F2E", "#DD5F3C"),
     "amber":    Palette("Amber",     "#FFD15C", "#E0960C", "#C48A12"),
     "graphite": Palette("Graphite",  "#8D99AE", "#454F60", "#566174"),
+    "ink":      Palette("Ink",       "#3A3A3C", "#0B0B0C", "#0D0D0D"),
 }
 
 # The six colours before these, each to the nearest of the eight.
@@ -117,16 +128,44 @@ GROUNDS = {"color": "In colour", "light": "On white", "dark": "On black"}
 _SHIPPED = PALETTES[DEFAULT_COLOR].accent
 
 
+# Ink: black buttons and grey fills, and in dark mode white buttons with
+# black words on them. Its own ramps, as a mix towards black or white would
+# make every fill too dark.
+INK_LIGHT = {"50": "#F2F2F2", "100": "#E8E8E8", "200": "#D6D6D6", "300": "#B4B4B4", "400": "#7C7C7C",
+             "500": "#262626", "600": "#0D0D0D", "700": "#0D0D0D", "800": "#000000", "900": "#000000",
+             "950": "#000000"}
+INK_DARK = {"50": "#262626", "100": "#2E2E2E", "200": "#3A3A3A", "300": "#555555", "400": "#8A8A8A",
+            "500": "#E0E0E0", "600": "#F2F2F2", "700": "#F2F2F2", "800": "#FFFFFF", "900": "#FFFFFF",
+            "950": "#FFFFFF"}
+
+# What draws white words on a solid accent with `text-white` (tailwind.css,
+# templates). On Ink's white accent in dark mode those words must be black,
+# so there white means the words that go on the accent.
+_ON_ACCENT = (".btn-primary,.bg-brand-600,.menu-item:hover,.dt-more-menu>:is(.dt-toolbar-btn,a,button):hover,"
+              ".dt-menu-item:hover,.util-rail details a.is-active,.biocal-due-btn.is-active,.mouse-peek-page:hover,"
+              ".choice-card:has(input:checked) .choice-check,.set-link-badge,.combo-opt.is-active,"
+              ".gs-step.is-done .gs-mark")
+
+
 def brand_css(color: str) -> str:
     """CSS that retints the app to match `color`; empty for the default."""
     pal = PALETTES.get(color)
     if pal is None or pal.accent == _SHIPPED:
         return ""
-    light = "".join(f"--color-brand-{k}:{v};" for k, v in _light_ramp(pal.accent).items())
-    dark = "".join(f"--color-brand-{k}:{v};" for k, v in _dark_ramp(pal.accent).items())
-    return (f":root{{{light}}}"
-            f"@media (prefers-color-scheme: dark){{:root:not([data-theme=\"light\"]){{{dark}}}}}"
-            f":root[data-theme=\"dark\"]{{{dark}}}")
+    if color == "ink":
+        light_ramp, dark_ramp = INK_LIGHT, INK_DARK
+        light_on, dark_on = "--color-on-brand:#FFFFFF;", "--color-on-brand:#0D0D0D;"
+    else:
+        light_ramp, dark_ramp = _light_ramp(pal.accent), _dark_ramp(pal.accent)
+        light_on = dark_on = ""
+    light = "".join(f"--color-brand-{k}:{v};" for k, v in light_ramp.items()) + light_on
+    dark = "".join(f"--color-brand-{k}:{v};" for k, v in dark_ramp.items()) + dark_on
+    css = (f":root{{{light}}}"
+           f"@media (prefers-color-scheme: dark){{:root:not([data-theme=\"light\"]){{{dark}}}}}"
+           f":root[data-theme=\"dark\"]{{{dark}}}")
+    if color == "ink":
+        css += f":is({_ON_ACCENT}){{--color-white:var(--color-on-brand)}}"
+    return css
 
 
 # ---------------------------------------------------------------- drawing
@@ -351,8 +390,9 @@ def _ground(pal: Palette, ground: str) -> _Ground:
         return _Ground("#FFFFFF", "#E4E9F0", pal.top, pal.bottom, pal.top, 0.30, 0.9,
                        _mix(pal.accent, "#000000", 0.3), 0.20, 0.9)
     if ground == "dark":
-        return _Ground("#3B414D", "#111317", _mix(pal.top, "#FFFFFF", 0.3), pal.top, pal.accent, 0.42, 0.16,
-                       "#000000", 0.22, 0.9)
+        # Ink would vanish on black: its picture is white there.
+        ink = ("#FFFFFF", "#D4D4D8") if _luma(pal.top) < 0.1 else (_mix(pal.top, "#FFFFFF", 0.3), pal.top)
+        return _Ground("#3B414D", "#111317", *ink, pal.accent, 0.42, 0.16, "#000000", 0.22, 0.9)
     return _Ground(pal.top, pal.bottom, "#FFFFFF", "#E6ECF4", _mix(pal.top, "#FFFFFF", 0.35), 0.55, 0.34,
                    _mix(pal.accent, "#000000", 0.65), 0.22, 0.86)
 
@@ -476,9 +516,10 @@ def set_choice(session, username: str, glyph: str, color: str, ground: str = DEF
 CHOICES: dict[str, tuple[str, ...]] = {
     # Light or dark: the computer's own, or always one. data-theme.
     "mode": ("auto", "light", "dark"),
-    # Liquid Glass over a wallpaper, or Solid (paper and white sheets, no
-    # glass). data-look.
-    "look": ("glass", "solid"),
+    # Liquid Glass over a wallpaper, Solid (paper and white sheets, no
+    # glass), or Mono (white and greys, no glass and no colour but warnings;
+    # static/appearance.css). data-look.
+    "look": ("glass", "solid", "mono"),
     # Geist or Inter, which the app ships, or the computer's own (SF Pro on
     # a Mac, Segoe UI on Windows). data-font.
     "font": ("geist", "inter", "system"),
@@ -543,9 +584,9 @@ THEMES: dict[str, Theme] = {
     "night": Theme("Night", "Always dark: dark glass, indigo, the icon on black. For a dark room and late hours.",
                    {"mode": "dark", "look": "glass", "font": "geist", "density": "roomy", "rows": "lines"},
                    ("helix", "indigo", "dark"), "default"),
-    "bench": Theme("Bench", "Easy to read standing up: solid, coral, the tube icon, compact rows with lines and stripes.",
-                   {"mode": "auto", "look": "solid", "font": "system", "density": "compact", "rows": "both"},
-                   ("microtube", "coral", "color"), "larger"),
+    "mono": Theme("Mono", "Black and white: no glass and no colour, black buttons, the system font, rows with lines.",
+                  {"mode": "auto", "look": "mono", "font": "system", "density": "regular", "rows": "lines"},
+                  ("helix", "ink", "color"), "default"),
 }
 
 
@@ -553,9 +594,11 @@ def theme_sketch(theme: Theme) -> str:
     """CSS variables for a theme's card in Settings (static/appearance.css):
     the canvas, panes and rows as the theme draws them, in light mode unless
     the theme is always dark."""
-    dark, glass = theme.choices["mode"] == "dark", theme.choices["look"] == "glass"
+    dark, look = theme.choices["mode"] == "dark", theme.choices["look"]
     accent = PALETTES[theme.icon[1]].accent
-    if glass:
+    if look == "mono":
+        canvas, pane = ("#181818", "#1F1F1F") if dark else ("#F4F4F4", "#FFFFFF")
+    elif look == "glass":
         canvas = _mix("#14171C" if dark else "#E9EDF3", accent, 0.22 if dark else 0.16)
         pane = "rgb(30 34 41 / 0.62)" if dark else "rgb(255 255 255 / 0.6)"
     else:

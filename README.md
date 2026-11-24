@@ -1268,7 +1268,8 @@ wallpaper: the sidebar, the row of tabs and each page's buttons float as
 clear glass over the page, which scrolls beneath them; cards are a thicker
 glass, and sheets and notebook pages the thickest, so the records stay as
 easy to read as paper. Prefer no glass? **Settings → Appearance & language →
-Look → Solid** gives white sheets on plain paper instead, for you alone. On a Mac the desktop app has no title bar; its close,
+Look → Solid** gives white sheets on plain paper instead, and **Mono** black and
+white, with colour kept for warnings; either is for you alone. On a Mac the desktop app has no title bar; its close,
 minimise and zoom buttons sit at the top of the sidebar, followed, as in
 Safari, by buttons to hide the sidebar, search everything, and go back and
 forward. The sidebar starts narrow, a column of icons: hover one to see its
@@ -1291,8 +1292,8 @@ divider lines, stripes, both or neither.
 Four **Themes** at the top of **Settings → Appearance & language** set all
 of this at once, with an app icon to match: **Glass** (the default),
 **Paper white** (solid, light, striped rows), **Night** (always dark) and
-**Bench** (solid, compact rows with lines and stripes, larger text in the
-Mac app). Change anything after and the look is your own.
+**Mono** (black and white: black buttons, greys for the rest, the computer's
+font, white buttons in the dark). Change anything after and the look is your own.
 
 **Settings** is laid out like the Mac's System Settings: a list of panes
 in a pane of glass, each with what it is set to now under its name
@@ -1314,7 +1315,8 @@ Each person can pick their own app icon in **Settings → Appearance &
 language**: a double helix,
 mouse, zebrafish, *C. elegans*, *Drosophila*, cryobox, microtube or petri
 dish, in one of eight colours (jade, ocean, indigo, wisteria, wild rose,
-coral, amber and graphite), on its colour, on white or on black. It is drawn
+coral, amber and graphite) or in ink, black (white in the dark), on its
+colour, on white or on black. It is drawn
 as Apple's Liquid Glass icons are: flat shapes, a little of the ground
 showing through, a thin light along the edges. The browser tab and the Mac
 app's Dock show it, and the app's accent colour follows it. The top of the sidebar shows the lab's own

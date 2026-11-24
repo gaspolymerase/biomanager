@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "app" / "static" / "theme-dark.css"
 SOURCES = ["frontend/src/tailwind.css", "frontend/src/styles.css", "frontend/src/blocks.css",
            "app/static/calendar.css", "app/static/home-layouts.css", "app/static/loader.css",
-           "app/static/plasmid.css"]
+           "app/static/plasmid.css", "app/static/appearance.css"]
 
 MEDIA = "@media (prefers-color-scheme: dark)"
 SYSTEM = ':not([data-theme="light"])'

@@ -117,6 +117,25 @@ class TextColours(unittest.TestCase):
                if self.ratio(colours[fg], colours[bg]) < 4.5]
         self.assertEqual(low, [], "text needs 4.5:1 on its background")
 
+    def test_the_mono_look_with_ink_is_readable_in_light_and_dark(self):
+        # The Mono theme: the look's greys (static/appearance.css) over the
+        # app's own tokens, and Ink's accent (app/appearance.py).
+        from app import appearance
+        css = _read(ROOT / "frontend" / "src" / "tailwind.css")
+        light = self.tokens(css[css.index("@theme {"):css.index("@media (prefers-color-scheme: dark)")])
+        dark_block = css[css.index("@media (prefers-color-scheme: dark)"):]
+        dark = {**light, **self.tokens(dark_block[:dark_block.index("\n}\n")])}
+        mono = _read(APP / "static" / "appearance.css")
+        mono = mono[mono.index(':root[data-look="mono"] {'):]
+        mono_dark = mono[mono.index("@media (prefers-color-scheme: dark)"):]
+        ink = lambda ramp, on: {**{f"brand-{k}": v for k, v in ramp.items()}, "on-brand": on}
+        light = {**light, **self.tokens(mono[:mono.index("\n}\n")]), **ink(appearance.INK_LIGHT, "#FFFFFF")}
+        dark = {**dark, **self.tokens(mono_dark[:mono_dark.index("\n  }\n")]), **ink(appearance.INK_DARK, "#0D0D0D")}
+        low = [f"{mode}: {fg} on {bg} {self.ratio(colours[fg], colours[bg]):.2f}"
+               for mode, colours in (("light", light), ("dark", dark)) for fg, bg in self.PAIRS
+               if self.ratio(colours[fg], colours[bg]) < 4.5]
+        self.assertEqual(low, [], "text needs 4.5:1 on its background")
+
 
 class Gallery(AppTestCase):
     """/design shows the shared pieces to an admin, and to no one else."""

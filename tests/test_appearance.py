@@ -7,6 +7,7 @@ alone. A theme sets everything at once."""
 from __future__ import annotations
 
 import importlib.util
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -50,6 +51,33 @@ class DrawingTests(AppTestCase):
             svg = appearance.render(glyph, "jade")
             self.assertNotIn("feSpecularLighting", svg)
             self.assertNotIn("feDiffuseLighting", svg)
+
+    def test_ink_on_black_is_drawn_white(self):
+        on_black = appearance.render("helix", "ink", "app", "dark")
+        self.assertIn('stop-color="#FFFFFF"', on_black.split('id="bm-w"')[1].split("</linearGradient>")[0])
+
+    def test_ink_is_black_and_white_in_dark_mode(self):
+        css = appearance.brand_css("ink")
+        self.assertIn("--color-brand-600:#0D0D0D;", css)
+        self.assertIn("--color-brand-600:#F2F2F2;", css)
+        self.assertIn("--color-on-brand:#0D0D0D;", css)
+        # White words on the accent become the accent's own: black on white.
+        self.assertIn(".btn-primary,", css)
+        self.assertIn("--color-white:var(--color-on-brand)", css)
+        self.assertNotIn("--color-white", appearance.brand_css("indigo"))
+
+    def test_the_mono_look_sets_every_token_again_for_dark_mode(self):
+        # Unlayered and after tailwind.css, a light value missing from the
+        # dark block would win in dark mode.
+        css = (ROOT / "app" / "static" / "appearance.css").read_text(encoding="utf-8")
+        css = css[css.index(':root[data-look="mono"] {'):]
+        light = set(re.findall(r"^  (--[a-z0-9-]+):", css[:css.index("\n}\n")], re.M))
+        dark_block = css[css.index("@media (prefers-color-scheme: dark)"):]
+        dark = set(re.findall(r"^    (--[a-z0-9-]+):", dark_block[:dark_block.index("\n  }\n")], re.M))
+        same_in_both = {"--wall", "--glass-light", "--glass-glow", "--glass-sheen", "--glass-hi", "--glass-edge",
+                        "--control-hi", "--glass-lift", "--field-shadow", "--scrim-blur"}
+        self.assertEqual(light - dark - same_in_both, set())
+        self.assertEqual(dark - light, set())
 
     def test_jade_keeps_the_shipped_accent(self):
         self.assertEqual(appearance.brand_css("jade"), "")
@@ -166,7 +194,8 @@ class FontTests(AppTestCase):
 
 
 class LookTests(AppTestCase):
-    """Liquid Glass by default; Solid (no glass, no wallpaper) for whoever picks it."""
+    """Liquid Glass by default; Solid (no glass, no wallpaper) or Mono (black
+    and white) for whoever picks it."""
 
     def look(self, client, value):
         return self.autosave(client, "/settings", {"action": "profile", "ui_look": value})
@@ -183,6 +212,12 @@ class LookTests(AppTestCase):
         self.assertNotIn('data-look="solid"', self.get_ok(me, "/home"))
         self.look(me, "neon")
         self.assertNotIn('data-look=', self.get_ok(me, "/home"))
+
+    def test_mono(self):
+        me = client_for(make_user(uniq("mono")))
+        self.look(me, "mono")
+        self.assertIn('data-look="mono"', self.get_ok(me, "/home"))
+        self.assertIn('<option value="mono" selected>', self.get_ok(me, "/settings"))
 
 
 class ChoiceRowTests(AppTestCase):
@@ -224,16 +259,30 @@ class ThemeTests(AppTestCase):
 
     def test_a_theme_sets_everything(self):
         me = client_for(make_user(uniq("night")))
-        body = self.autosave(me, "/settings", {"action": "theme", "theme": "bench"}).get_json()
-        self.assertEqual(body, {"ok": True, "text_size": "larger"})
+        body = self.autosave(me, "/settings", {"action": "theme", "theme": "paper"}).get_json()
+        self.assertEqual(body, {"ok": True, "text_size": "default"})
         page = self.get_ok(me, "/settings")
         tag = page[page.index("<html"):page.index(">", page.index("<html"))]
+        self.assertIn('data-theme="light"', tag)
         self.assertIn('data-look="solid"', tag)
+        self.assertIn('data-font="inter"', tag)
+        self.assertIn('data-density="regular"', tag)
+        self.assertIn('data-rows="stripes"', tag)
+        self.assertIn('href="/app-icon/helix/ocean/light.svg?v=', page)
+        self.assertRegex(page, r'class="theme-card is-current"\s+data-theme-name="paper"')
+
+    def test_mono_is_black_and_white(self):
+        me = client_for(make_user(uniq("mono")))
+        self.autosave(me, "/settings", {"action": "theme", "theme": "mono"})
+        page = self.get_ok(me, "/home")
+        tag = page[page.index("<html"):page.index(">", page.index("<html"))]
+        self.assertIn('data-look="mono"', tag)
         self.assertIn('data-font="system"', tag)
-        self.assertIn('data-density="compact"', tag)
-        self.assertIn('data-rows="both"', tag)
-        self.assertIn('href="/app-icon/microtube/coral.svg?v=', page)
-        self.assertRegex(page, r'class="theme-card is-current"\s+data-theme-name="bench"')
+        self.assertIn('href="/app-icon/helix/ink.svg?v=', page)
+        self.assertIn("--color-brand-600:#0D0D0D;", page)
+
+    def test_the_themes(self):
+        self.assertEqual(list(appearance.THEMES), ["glass", "paper", "night", "mono"])
 
     def test_changing_anything_after_makes_it_your_own(self):
         me = client_for(make_user(uniq("mine")))

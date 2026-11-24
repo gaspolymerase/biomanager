@@ -448,9 +448,10 @@
   "Sign-in": "登录",
   "Take your records with you, and keep the whole lab safe.": "带走你的记录，并保护好整个实验室。",
   "Look": "外观样式",
-  "Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Only for you.": "液态玻璃：柔和的背景上叠着磨砂玻璃面板。实色：素色底上的白色表格，没有玻璃效果。只对你自己生效。",
+  "Liquid Glass: frosted panes over a soft wallpaper. Solid: white sheets on plain paper, no glass. Mono: black and white, no glass, colour only for warnings. Only for you.": "液态玻璃：柔和的背景上叠着磨砂玻璃面板。实色：素色底上的白色表格，没有玻璃效果。黑白：只有黑白灰，没有玻璃效果，只有提醒才用颜色。只对你自己生效。",
   "Liquid Glass": "液态玻璃",
   "Solid": "实色",
+  "Mono": "黑白",
   "Applying the proposal…": "正在应用提议…",
   "Theme": "主题",
   "In your browser tab, the sidebar and the Mac app’s Dock. Its colour tints buttons and highlights everywhere.": "显示在浏览器标签、侧边栏和 Mac 应用的 Dock 上。它的颜色也会用在各处的按钮和高亮上。",
@@ -466,6 +467,7 @@
   "Coral": "珊瑚",
   "Amber": "琥珀",
   "Graphite": "石墨",
+  "Ink": "墨色",
   "Mode": "模式",
   "Light or dark: as this computer is set, or always one.": "浅色或深色：跟随这台电脑的设置，或者始终用其中一种。",
   "Same as this computer": "跟随系统",
@@ -486,9 +488,8 @@
   "Glass": "玻璃",
   "Paper white": "纸面",
   "Night": "夜间",
-  "Bench": "实验台",
   "The default. Frosted glass over a soft wallpaper, jade, roomy rows with lines.": "默认。磨砂玻璃叠在淡彩壁纸上，青玉色，宽松的行加分隔线。",
   "Clean as a sheet of paper: solid, no glass, ocean blue, Inter, striped rows.": "像白纸一样干净：纯色无玻璃，海蓝色，Inter 字体，斑马纹的行。",
   "Always dark: dark glass, indigo, the icon on black. For a dark room and late hours.": "始终深色：深色玻璃，靛青色，黑底图标。适合暗室和晚上。",
-  "Easy to read standing up: solid, coral, the tube icon, compact rows with lines and stripes.": "站着也看得清：纯色，珊瑚色，离心管图标，紧凑的行加分隔线和斑马纹。"
+  "Black and white: no glass and no colour, black buttons, the system font, rows with lines.": "黑白：没有玻璃也没有颜色，黑色按钮，系统字体，行之间用分隔线。"
 }

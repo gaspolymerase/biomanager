@@ -116,6 +116,18 @@ cool paper, every glass and sheet token a solid white (or the dark mode's
 solid), the sidebar a second paper, and turns `backdrop-filter` off. A new
 surface that reads its colours from the tokens follows both looks.
 
+**Mono** (`html[data-look="mono"]`) is black and white, for the theme of
+that name: its tokens are in `static/appearance.css`, unlayered, so they win
+over `tailwind.css`'s. White canvas and panes edged by a hairline, greys for
+the rest, no glass and no blur, and the colours that only decorate (the
+Tailwind tints behind a database's tone, a purpose or a tag, `ok` and `info`,
+a person's badge) turned to greys; `danger` and `warn` keep theirs. Each
+token it sets is set again for dark mode (`tests/test_appearance.py` checks),
+and `scripts/theme-dark-css.py` copies that block for a chosen dark mode. Its
+accent is the person's colour; the theme's is **Ink** (`appearance.INK_LIGHT`,
+`INK_DARK`): black, and white in dark mode, where `brand_css` also turns the
+white words on the accent (`text-white`) black.
+
 The page scrolls *beneath* the two rows at the top (`.topstrip`, then
 `.toolbar`), which float over it: `.shell-scroll` is padded at the top by
 `--tabbar-h + --toolbar-h`, so a `sticky top-0` header stops just under
