@@ -443,6 +443,7 @@ def _inventory_vocabulary(session) -> list[dict]:
         mv = isvc.view(module)
         out.append({"kind": "inventory", "inventory_kind": module.kind, "key": module.key, "label": module.label,
                     "noun": mv.item_noun, "statuses": list(mv.statuses), "categories": list(mv.categories),
+                    "prefixes": dict(mv.prefixes),
                     "fields": [{"key": f["key"], "label": f["label"], "type": f["type"]} for f in mv.fields],
                     "required": list(mv.required),
                     "boxes": sorted((n for (n,) in session.execute(select(InventoryRack.name)

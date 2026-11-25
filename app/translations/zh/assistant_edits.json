@@ -62,5 +62,14 @@
   "The number in the name": "名称中的数字",
   "Date added": "添加日期",
   "ascending": "升序",
-  "descending": "降序"
+  "descending": "降序",
+  "Say which %(label)s.": "请说明是哪个%(label)s。",
+  "Give the prefix for %(type)s (an empty one stops numbering it).": "请给出%(type)s的前缀（留空则不再自动编号）。",
+  "%(type)s has that prefix already: nothing would change.": "%(type)s已经是这个前缀，不会有任何改动。",
+  "numbered %(first)s, %(second)s…": "编号为 %(first)s、%(second)s……",
+  "%(database)s: a new type, %(type)s, %(numbered)s": "%(database)s：新类型 %(type)s，%(numbered)s",
+  "%(database)s: %(type)s no longer numbered (was %(before)s…); its new ones are named by hand": "%(database)s：%(type)s不再自动编号（原为 %(before)s…），新样本由你自己命名",
+  "%(database)s: %(type)s numbered after %(after)s (was %(before)s); the next one left without a %(name)s is %(code)s": "%(database)s：%(type)s按 %(after)s 编号（原为 %(before)s）；下一个不填%(name)s的是 %(code)s",
+  "Types": "类型",
+  "Prefix of %(type)s": "%(type)s的前缀"
 }

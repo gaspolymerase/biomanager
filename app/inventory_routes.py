@@ -2035,6 +2035,47 @@ def add_type(key: str):
         return redirect(url_for("inventory.module", key=row.key, type=name))
 
 
+@bp.route("/<key>/types/prefix", methods=["POST"])
+def type_prefix(key: str):
+    """One type's prefix, as Configure's Prefix column sets it (an
+    assistant's inventory_type sends this): its entries left without a name
+    are numbered after it, from one past the highest already there; an
+    empty one stops numbering it. Configure's, so an admin's or whoever
+    created the database."""
+    name = request.form.get("type")
+    with SessionLocal() as session:
+        row = _module_or_404(session, key)
+        if not access.can_configure(row):
+            return _done(key, error=gettext("Only an admin, or whoever created %(name)s, can change a prefix.",
+                                            name=_tr(row.label)))
+        mv = svc.view(row)
+        if not mv.has("tabs"):
+            return _done(key, error=gettext("%(name)s has no type tabs.", name=_tr(row.label)))
+        found = mv.tab(name)
+        if not found:
+            return _done(key, error=gettext("%(type)s is not one of the types of %(name)s.",
+                                            type=" ".join(str(name or "").split()), name=_tr(row.label)))
+        prefix = presets.clean_prefix(request.form.get("prefix"))
+        prefixes = {c: p for c, p in mv.prefixes.items() if c != found}
+        if prefix:
+            prefixes[found] = prefix
+        problems = presets.prefix_problems(prefixes)
+        if problems:
+            return _done(key, error=gettext("Not saved: %(reason)s", reason=_sentences(*problems)))
+        settings = presets.load(row.settings)
+        settings["prefixes"] = prefixes
+        row.settings = json.dumps(settings)
+        upcoming = svc.next_code(session, row.id, prefix) if prefix else ""
+        session.commit()
+        if prefix:
+            flash(gettext("%(type)s is numbered after %(prefix)s: the next one left without a %(name)s is %(code)s.",
+                          type=_tr(found), prefix=prefix, name=_tr(mv.name_label), code=upcoming), "success")
+        else:
+            flash(gettext("%(type)s is not numbered any more: you name its %(nouns)s yourself.",
+                          type=_tr(found), nouns=_tr(mv.item_noun_plural)), "success")
+        return redirect(url_for("inventory.module", key=row.key, type=found))
+
+
 MAX_TYPES = 40
 
 

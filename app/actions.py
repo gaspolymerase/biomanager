@@ -2504,6 +2504,89 @@ def _inventory_renumber(s, module, v):
                  form=[("by", v.get("by", rn.NAME_NUMBER)), ("order", v.get("order", "ascending"))])]
 
 
+def _type_change(s, module, v) -> tuple[str, str, str]:
+    """(the type as the database spells it, "" for a new one; its prefix
+    now; the prefix it will have) for inventory_type."""
+    from . import inventory as presets
+    from . import inventory_service as isvc
+    from .lab import can_see
+    if not can_see(module):
+        raise ActionError(gettext("There is no inventory “%(key)s”.", key=module.key))
+    mv = isvc.view(module)
+    if not mv.has("tabs"):
+        raise ActionError(gettext("%(name)s has no type tabs.", name=translate_value(module.label)))
+    name = " ".join(str(v.get("type") or "").split())
+    if not name:
+        raise ActionError(gettext("Say which %(label)s.", label=translate_value(mv.category_label).lower()))
+    found = mv.tab(name)
+    after = presets.clean_prefix(v.get("prefix"))
+    if found:
+        if "prefix" not in v:
+            raise ActionError(gettext("Give the prefix for %(type)s (an empty one stops numbering it).",
+                                      type=translate_value(found)))
+        if after == mv.prefix_for(found):
+            raise ActionError(gettext("%(type)s has that prefix already: nothing would change.",
+                                      type=translate_value(found)))
+    return found, (mv.prefix_for(found) if found else ""), after
+
+
+def _type_numbered(prefix: str) -> str:
+    return gettext("numbered %(first)s, %(second)s…", first=f"{prefix}1", second=f"{prefix}2") if prefix else \
+        gettext("named by hand")
+
+
+def _type_said(s, module, v) -> str:
+    from . import inventory_service as isvc
+    found, before, after = _type_change(s, module, v)
+    database = translate_value(module.label)
+    if not found:
+        return gettext("%(database)s: a new type, %(type)s, %(numbered)s", database=database,
+                       type=" ".join(str(v["type"]).split()), numbered=_type_numbered(after))
+    if not after:
+        return gettext("%(database)s: %(type)s no longer numbered (was %(before)s…); its new ones are named by hand",
+                       database=database, type=translate_value(found), before=before)
+    name = translate_value(isvc.view(module).name_label)
+    return gettext("%(database)s: %(type)s numbered after %(after)s (was %(before)s); the next one left without a %(name)s is %(code)s",  # noqa: E501
+                   database=database, type=translate_value(found), after=after,
+                   before=f"{before}…" if before else gettext("named by hand"), name=name,
+                   code=isvc.next_code(s, module.id, after))
+
+
+def _type_shows(s, module, v) -> list[dict]:
+    """The types and prefixes before → after, in place of the change
+    history's record, which has the database's settings as one JSON."""
+    from . import inventory_service as isvc
+    found, before, after = _type_change(s, module, v)
+    type_name = found or " ".join(str(v["type"]).split())
+    fields: dict[str, list] = {}
+    if not found:
+        types = isvc.view(module).categories
+        fields[gettext("Types")] = [", ".join(types), ", ".join([*types, type_name])]
+    fields[gettext("Prefix of %(type)s", type=translate_value(type_name))] = [before, after]
+    return [{"table": "inventory_modules", "id": module.id, "label": module.label, "action": "update", "details": "",
+             "changes": {"changes": fields}}]
+
+
+@action(name="inventory_type", area="inventory", title="A type and its prefix",
+        help="For an inventory with a tab per type (Samples): set a type's prefix, after which its new items left "
+             "without a name are numbered on their own (tissue B1, B2…, from one past the highest already there; "
+             "an empty prefix stops numbering it), or add a type, with its prefix or without. Changing an "
+             "existing type's prefix is Configure's: only an admin or whoever created the inventory may; anyone "
+             "who uses it may add one. Two types can't share a prefix, and a prefix can't end in a digit. Each "
+             "type's prefix is in inventories (prefixes).",
+        target="inventory",
+        fields=(Field("type", "text", "The type, by its name: one of the inventory's (see inventories), or a new one",
+                      required=True),
+                Field("prefix", "text", "Its prefix (B, BL, PL-…); empty: not numbered")),
+        describe=_type_said, shows=_type_shows)
+def _inventory_type(s, module, v):
+    found, _before, after = _type_change(s, module, v)
+    if found:
+        return [Call("POST", f"/inventory/{module.key}/types/prefix", form=[("type", found), ("prefix", after)])]
+    return [Call("POST", f"/inventory/{module.key}/types/add", form=[("name", " ".join(str(v["type"]).split())),
+                                                                   ("prefix", after)])]
+
+
 def _left_after(s, item, used: float) -> tuple[str, str]:
     """(what the quantity is, what it will be) once `used` is taken off."""
     from . import inventory_service as isvc
@@ -3221,7 +3304,10 @@ def _run(app, username, changes, apply, label, description, lang) -> Outcome:
                 step.commit()
                 with SessionLocal() as s:
                     out.records, last = _entries_since(s, last)
-                out.records += shown
+                # An action's own before → after stands for the history's of
+                # the same record (a database's settings, kept as one JSON).
+                own = {(r["table"], r["id"]) for r in shown}
+                out.records = [r for r in out.records if (r["table"], r["id"]) not in own] + shown
                 out.warnings += side_effects(values, out.records)
             else:
                 step.rollback()

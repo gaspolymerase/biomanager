@@ -10,6 +10,7 @@ import re
 
 from tests.base import *  # noqa: F401,F403
 from tests.base import execute, one, rows, uniq
+from tests.test_api import Base as ApiBase
 from tests.test_inventory import InventoryCase, choice_rows, module_id, settings_of
 
 
@@ -197,3 +198,96 @@ class PrefixesLaterTest(InventoryCase):
     def test_an_inventory_without_type_tabs_has_no_prefix_column(self):
         key = self.new_module(self.a, "reagents")
         self.assertNotIn("categories_0_prefix", self.get_ok(self.a, f"/inventory/{key}/configure"))
+
+
+class OnePrefixAtATimeTest(InventoryCase):
+    """POST /inventory/<key>/types/prefix: one type's prefix, as Configure's
+    Prefix column sets it (an assistant's inventory_type sends it)."""
+
+    def test_set_changed_and_dropped_by_an_admin_or_its_maker(self):
+        key = self.new_module(self.a, "samples", types={"tissue": "", "blood": "BL"})
+        for n in (1, 2, 522):
+            self.make_item(self.m, key, f"B{n}", category="tissue")
+        r = self.post(self.a, f"/inventory/{key}/types/prefix", data={"type": "Tissue", "prefix": " B "})
+        self.assertFlash(r, "the next one left without a Sample ID is B523", "success")
+        self.assertEqual(settings_of(key)["prefixes"], {"tissue": "B", "blood": "BL"})
+        self.post(self.m, f"/inventory/{key}/items/save", data={"id": "", "name": "", "category": "tissue"})
+        self.assertEqual(names(key)[-1], "B523")
+        r = self.post(self.a, f"/inventory/{key}/types/prefix", data={"type": "blood", "prefix": ""})
+        self.assertFlash(r, "blood is not numbered any more", "success")
+        self.assertEqual(settings_of(key)["prefixes"], {"tissue": "B"})
+        # Someone who only uses it may add a type, not change one's numbering.
+        r = self.post(self.m, f"/inventory/{key}/types/prefix", data={"type": "tissue", "prefix": "T"})
+        self.assertFlash(r, "can change a prefix", "error")
+        self.assertEqual(settings_of(key)["prefixes"], {"tissue": "B"})
+
+    def test_refused_for_a_type_it_lacks_or_a_prefix_that_clashes(self):
+        key = self.new_module(self.a, "samples", types={"tissue": "T", "blood": ""})
+        r = self.post(self.a, f"/inventory/{key}/types/prefix", data={"type": "plasma", "prefix": "PL"})
+        self.assertFlash(r, "plasma is not one of the types", "error")
+        r = self.post(self.a, f"/inventory/{key}/types/prefix", data={"type": "blood", "prefix": "t"})
+        self.assertFlash(r, "both have the prefix", "error")
+        r = self.post(self.a, f"/inventory/{key}/types/prefix", data={"type": "blood", "prefix": "B1"})
+        self.assertFlash(r, "ends in a digit", "error")
+        self.assertEqual(settings_of(key)["prefixes"], {"tissue": "T"})
+        other = self.new_module(self.a, "reagents")
+        r = self.post(self.a, f"/inventory/{other}/types/prefix", data={"type": "buffer", "prefix": "BF"})
+        self.assertFlash(r, "has no type tabs", "error")
+
+
+class AnAssistantSetsAPrefixTest(InventoryCase):
+    """inventory_type: a type's prefix, or a new type with its own, proposed
+    by an assistant and approved like any other change."""
+
+    def run_type(self, who, key, apply=False, **fields):
+        from tests.test_actions_more import run
+        return run(who, {"action": "inventory_type", "target": key, "fields": fields}, apply=apply)
+
+    def test_a_lab_that_named_its_tissue_b1_b2(self):
+        from tests.test_actions_more import errors_of
+        key = self.new_module(self.a, "samples", types={"tissue": "", "blood": "BL"})
+        for n in (1, 2, 5):
+            self.make_item(self.m, key, f"B{n}", category="tissue")
+        label = one("select label from inventory_modules where key=?", key)
+        out = self.run_type(self.admin, label, type="tissue", prefix="B")
+        self.assertTrue(out.ok, errors_of(out))
+        self.assertIn("tissue numbered after B (was named by hand); the next one left without a Sample ID is B6",
+                      out.changes[0].summary)
+        shown = [r for r in out.changes[0].records if r["table"] == "inventory_modules"]
+        self.assertEqual([r["changes"]["changes"] for r in shown], [{"Prefix of tissue": ["", "B"]}])
+        self.assertEqual(settings_of(key)["prefixes"], {"blood": "BL"})          # a preview
+        self.assertTrue(self.run_type(self.admin, key, apply=True, type="tissue", prefix="B").ok)
+        self.assertEqual(settings_of(key)["prefixes"], {"tissue": "B", "blood": "BL"})
+        self.post(self.m, f"/inventory/{key}/items/save", data={"id": "", "name": "", "category": "tissue"})
+        self.assertEqual(names(key)[-1], "B6")
+        self.assertIn("nothing would change", errors_of(self.run_type(self.admin, key, type="Tissue", prefix=" B")))
+        out = self.run_type(self.admin, key, type="blood", prefix="")
+        self.assertIn("blood no longer numbered (was BL…)", out.changes[0].summary)
+
+    def test_only_an_admin_or_its_maker_changes_one_anyone_adds_one(self):
+        from tests.test_actions_more import errors_of
+        key = self.new_module(self.a, "samples", types={"tissue": "T"})
+        self.assertIn("can change a prefix", errors_of(self.run_type(self.member, key, type="tissue", prefix="B")))
+        out = self.run_type(self.member, key, apply=True, type=" plasma ", prefix="PL")
+        self.assertTrue(out.ok, errors_of(out))
+        self.assertIn("a new type, plasma, numbered PL1, PL2…", out.changes[0].summary)
+        s = settings_of(key)
+        self.assertEqual((s["categories"], s["prefixes"]), (["tissue", "plasma"], {"tissue": "T", "plasma": "PL"}))
+
+    def test_what_it_needs(self):
+        from tests.test_actions_more import errors_of
+        key = self.new_module(self.a, "samples", types={"tissue": "T", "blood": ""})
+        self.assertIn("Give the prefix for tissue", errors_of(self.run_type(self.admin, key, type="tissue")))
+        self.assertIn("both have the prefix", errors_of(self.run_type(self.admin, key, type="blood", prefix="T")))
+        self.assertIn("has no type tabs", errors_of(self.run_type(self.admin, self.new_module(self.a, "reagents"),
+                                                                  type="buffer", prefix="BF")))
+        self.assertIn("There is no inventory", errors_of(self.run_type(self.admin, uniq("Nowhere "), type="x")))
+
+
+class ThePrefixesAreListedTest(ApiBase):
+    def test_in_the_vocabulary(self):
+        key = InventoryCase.new_module(self.a, "samples", types={"tissue": "B", "blood": ""})
+        tok = self.token(self.m, scope="read")
+        vocabulary = self.call("get", "/vocabulary", tok).get_json()
+        samples = [d for d in vocabulary["databases"] if d["key"] == key][0]
+        self.assertEqual((samples["categories"], samples["prefixes"]), (["tissue", "blood"], {"tissue": "B"}))
