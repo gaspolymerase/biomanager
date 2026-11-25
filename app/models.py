@@ -766,6 +766,9 @@ class AuditEntry(Base):
     record instead of a row per change.
     """
     __tablename__ = "audit_log"
+    # Was this record changed after a batch? (undo._changed_since, revision
+    # 0057): one lookup per record instead of a scan of the table's log.
+    __table_args__ = (Index("ix_audit_log_record", "table_name", "record_id", "id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     table_name: Mapped[str] = mapped_column(String(40), index=True)

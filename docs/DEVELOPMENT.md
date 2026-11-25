@@ -4415,7 +4415,12 @@ and a record **changed again after the batch** — reverting then would discard
 whoever's later edit. That second case offers *Undo anyway*. The undo is
 itself recorded as a batch, so undoing an undo is a redo: the original
 batch is then in force again (its `undone_at` cleared) and can be undone
-again; the batch's own undos and redos don't count as later edits. A batch
+again; the batch's own undos and redos don't count as later edits. Settings'
+History and the Batches page ask that of every batch they list, so it is one
+query per batch (`undo._changed_since`: the batch's entries with a later
+entry for the same record), read from the index on `audit_log(table_name,
+record_id, id)` (revision 0057); asked entry by entry, an import of
+thousands of rows kept Settings waiting for seconds. A batch
 is claimed with a conditional UPDATE before anything is reversed, so two
 people pressing Undo together undo it once. Records the batch created are
 reversed last (after the records that point at them are put back), since

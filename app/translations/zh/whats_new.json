@@ -1,4 +1,6 @@
 {
+  "In the notebook, the button that shows the sidebar again works on its home, a topic and the libraries.": "记录本里重新显示侧栏的按钮，在记录本首页、主题和各个库页面上又能用了。",
+  "**Settings** and **Batch history** open at once in a lab that has imported thousands of records.": "导入了几千条记录的实验室，打开 **设置** 和 **批量操作记录** 也不用再等。",
   "The loading animation moves in the Mac app and Safari while a page loads, instead of standing still, and the well plate, the tenth, now shows too.": "在 Mac 应用和 Safari 里，页面加载时的小动画会动了，不再定住不动；第十个动画（孔板）现在也会出现了。",
   "An AI assistant can give a sample type its prefix (*give tissue the prefix B*), saying the name the next one gets.": "AI 助手可以给样本类型设置前缀（*给组织填前缀 B*），并告诉你下一个样本的编号。",
   "A black-and-white **Mono** theme in **Settings → Appearance & language**: no glass and no colour, black buttons, white in dark mode.": "**设置 → 外观与语言** 里多了黑白主题 **黑白**：没有玻璃效果，也没有颜色，按钮是黑色的，深色模式下是白色。",

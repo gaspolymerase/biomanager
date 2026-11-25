@@ -30,6 +30,12 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.13.3": {
+        "fixed": [
+            "In the notebook, the button that shows the sidebar again works on its home, a topic and the libraries.",
+            "**Settings** and **Batch history** open at once in a lab that has imported thousands of records.",
+        ],
+    },
     "2.13.2": {
         "fixed": [
             "The loading animation moves in the Mac app and Safari while a page loads, instead of standing still, and the well plate, the tenth, now shows too.",

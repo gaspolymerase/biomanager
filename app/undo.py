@@ -22,7 +22,8 @@ import re
 import json
 from datetime import datetime
 
-from sqlalchemy import or_, select
+from sqlalchemy import exists, func, or_, select
+from sqlalchemy.orm import aliased
 
 from . import audit
 from .i18n import gettext, ngettext
@@ -43,19 +44,18 @@ def _model_for(table: str):
 
 
 def describe(session, batch: BatchRecord) -> dict:
-    """What undoing this batch would do, without doing it."""
-    entries = session.scalars(
-        select(AuditEntry).where(AuditEntry.batch_id_fk == batch.id)
-    ).all()
-    counts = {"create": 0, "update": 0, "delete": 0}
-    for entry in entries:
-        if entry.action in counts:
-            counts[entry.action] += 1
+    """What undoing this batch would do, without doing it. Settings' History
+    and the Batches page describe a dozen or more batches each time they
+    open, and an import is a batch of thousands of entries: so it counts
+    them in the database rather than loading them."""
+    counts = dict(session.execute(
+        select(AuditEntry.action, func.count()).where(AuditEntry.batch_id_fk == batch.id)
+        .group_by(AuditEntry.action)).all())
     return {
-        "entries": len(entries),
-        "creates": counts["create"],
-        "updates": counts["update"],
-        "deletes": counts["delete"],
+        "entries": sum(counts.values()),
+        "creates": counts.get("create", 0),
+        "updates": counts.get("update", 0),
+        "deletes": counts.get("delete", 0),
         "blocked": blockers(session, batch),
     }
 
@@ -68,27 +68,22 @@ def blockers(session, batch: BatchRecord) -> list[str]:
                                 when=f"{batch.undone_at:%Y-%m-%d %H:%M}"))
         return problems
 
-    entries = session.scalars(
-        select(AuditEntry).where(AuditEntry.batch_id_fk == batch.id)
-    ).all()
-    if not entries:
+    tables = set(session.scalars(
+        select(AuditEntry.table_name).where(AuditEntry.batch_id_fk == batch.id).distinct()))
+    if not tables:
         problems.append(gettext("No recorded changes to reverse."))
         return problems
 
-    for entry in entries:
-        if entry.table_name not in UNDOABLE_TABLES:
-            problems.append(gettext("Table %(table)s cannot be reversed automatically.", table=entry.table_name))
-            break
-    late = _changed_since(session, batch, entries)
+    for table in sorted(tables - UNDOABLE_TABLES)[:1]:
+        problems.append(gettext("Table %(table)s cannot be reversed automatically.", table=table))
+    late = _changed_since(session, batch)
     if late:
         problems.append(late)
     return problems
 
 
-def _changed_since(session, batch: BatchRecord, entries=None) -> str:
+def _changed_since(session, batch: BatchRecord) -> str:
     """Why reverting would throw away a later edit, or ""."""
-    if entries is None:
-        entries = session.scalars(select(AuditEntry).where(AuditEntry.batch_id_fk == batch.id)).all()
     # Its own undos and redos ("undo of batch #N", and undos of those) are
     # not someone's later edit: a redone batch can be undone again.
     chain, frontier = {batch.id}, {batch.id}
@@ -97,21 +92,22 @@ def _changed_since(session, batch: BatchRecord, entries=None) -> str:
             BatchRecord.description.in_([f"undo of batch #{n}" for n in frontier])))) - chain
         chain |= found
         frontier = found
-    touched_since = 0
-    for entry in entries:
-        if entry.table_name not in UNDOABLE_TABLES:
-            continue
-        later = session.scalar(
-            select(AuditEntry.id).where(
-                AuditEntry.table_name == entry.table_name,
-                AuditEntry.record_id == entry.record_id,
-                AuditEntry.id > entry.id,
-                or_(AuditEntry.batch_id_fk.is_(None),
-                    AuditEntry.batch_id_fk.not_in(chain)),
-            ).limit(1)
-        )
-        if later is not None:
-            touched_since += 1
+    # The batch's entries with a later entry for the same record outside
+    # that chain: one query for the whole batch, answered from the index on
+    # (table_name, record_id, id) (revision 0057). Asked entry by entry, a
+    # 3000-row import was 6000 queries each time Settings opened (#166).
+    later = aliased(AuditEntry)
+    touched_since = session.scalar(
+        select(func.count()).select_from(AuditEntry).where(
+            AuditEntry.batch_id_fk == batch.id,
+            AuditEntry.table_name.in_(sorted(UNDOABLE_TABLES)),
+            exists().where(
+                later.table_name == AuditEntry.table_name,
+                later.record_id == AuditEntry.record_id,
+                later.id > AuditEntry.id,
+                or_(later.batch_id_fk.is_(None), later.batch_id_fk.not_in(sorted(chain))),
+            ),
+        )) or 0
     if touched_since:
         return ngettext("%(num)s record changed after this batch — reverting would throw that later edit away.",
                         "%(num)s records changed after this batch — reverting would throw those later edits away.",
