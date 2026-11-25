@@ -31,9 +31,13 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
     "2.13.3": {
+        "new": [
+            "Hovering a sample's mouse ID in **Samples** shows that mouse: its sex, age, genotype, cage and more.",
+        ],
         "fixed": [
             "In the notebook, the button that shows the sidebar again works on its home, a topic and the libraries.",
             "**Settings** and **Batch history** open at once in a lab that has imported thousands of records.",
+            "A sample's mouse ID opens one menu, not two, in the Mac app and Safari, and typing narrows its IDs.",
         ],
     },
     "2.13.2": {
