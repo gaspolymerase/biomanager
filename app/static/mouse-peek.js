@@ -3,22 +3,42 @@
    same /notebook/lookup/mouse/<id> and /notebook/backlinks/mouse/<id>.
    A link opts in with data-mouse-peek="<mouse ID>"; data-mouse-peek-tag
    adds its custom tag, which the page leaves off where the person keeps
-   custom tags hidden. Clicking the link still opens the mouse. */
+   custom tags hidden. Clicking the link still opens the mouse.
+   An input opts in with an empty data-mouse-peek: the card is of the
+   mouse whose ID is typed in it (a sample's source), its tag only while
+   that is still the ID the page was drawn with. It shows on hovering, not
+   while the input's suggestions are open or it is being typed in. */
 (function () {
   const lookups = new Map(); // id -> Promise of the lookup, or null when not found
   const mentions = new Map(); // id -> Promise of the notebook pages naming it
+  const MAX_ID = 2 ** 31 - 1; // app/formutil.py: no mouse has a bigger ID
   let card = null;
   let active = null;
   let hideTimer = null;
   let showTimer = null;
 
   const esc = BioHtml.escape;
+  const isInput = (el) => el instanceof HTMLInputElement;
+
+  // The mouse an input names: its digits, as the server reads them (007 is
+  // mouse 7; app/inventory_items.py _mouse_number); words name none.
+  function idOf(el) {
+    if (!isInput(el)) return el.dataset.mousePeek;
+    const typed = el.value.trim().replace(/^#/, '');
+    return /^\d+$/.test(typed) ? typed.replace(/^0+(?=\d)/, '') : '';
+  }
+
+  function tagOf(el) {
+    if (isInput(el) && el.value.trim() !== el.defaultValue.trim()) return '';
+    return el.dataset.mousePeekTag || '';
+  }
 
   function getJSON(url) {
     return fetch(url, { credentials: 'same-origin' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   }
 
   function lookup(id) {
+    if (Number(id) > MAX_ID) return Promise.resolve(null);
     if (!lookups.has(id)) lookups.set(id, getJSON(`/notebook/lookup/mouse/${encodeURIComponent(id)}`));
     return lookups.get(id);
   }
@@ -28,14 +48,17 @@
     return mentions.get(id);
   }
 
-  function ensureCard() {
-    if (card) return card;
-    card = document.createElement('div');
-    card.className = 'mouse-peek';
-    card.hidden = true;
-    card.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-    card.addEventListener('mouseleave', hideSoon);
-    document.body.appendChild(card);
+  function ensureCard(link) {
+    if (!card) {
+      card = document.createElement('div');
+      card.className = 'mouse-peek';
+      card.hidden = true;
+      card.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+      card.addEventListener('mouseleave', hideSoon);
+    }
+    // In a dialog, in the dialog: the page behind a modal one is under it.
+    const home = link.closest('dialog') || document.body;
+    if (card.parentNode !== home) home.appendChild(card);
     return card;
   }
 
@@ -71,7 +94,7 @@
         [t('Status'), data.status],
         [t('Owner'), data.owner],
         [t('Cage'), data.cage_id],
-        [t('Custom tag'), link.dataset.mousePeekTag],
+        [t('Custom tag'), tagOf(link)],
       ].filter(([, v]) => v).map(([k, v]) => row(k, v)).join('');
       body = rows || `<div class="mouse-peek-note">${esc(t('No details yet.'))}</div>`;
     }
@@ -97,12 +120,16 @@
     place(link);
   }
 
+  // An input whose suggestions are open (static/combobox.js) has the menu
+  // where the card would go.
+  const busy = (el) => isInput(el) && el.getAttribute('aria-expanded') === 'true';
+
   function show(link) {
-    const id = link.dataset.mousePeek;
-    if (!id) return;
+    const id = idOf(link);
+    if (!id || busy(link)) return;
     clearTimeout(hideTimer);
     active = link;
-    ensureCard().hidden = false;
+    ensureCard(link).hidden = false;
     let data;
     let pages;
     draw(link, id, data, pages);
@@ -117,27 +144,41 @@
     });
   }
 
-  function hide() {
+  function cancelShow() {
     clearTimeout(showTimer);
+    showTimer = null;
+  }
+
+  function hide() {
+    cancelShow();
     if (card) card.hidden = true;
     active = null;
   }
 
   function hideSoon() {
-    clearTimeout(showTimer);
+    cancelShow();
     clearTimeout(hideTimer);
     hideTimer = setTimeout(hide, 150);
   }
 
   // A pointer resting on the link, not one passing over the sheet on its way.
+  function showSoon(link) {
+    clearTimeout(hideTimer);
+    if (link === active) return;
+    cancelShow();
+    showTimer = setTimeout(() => { showTimer = null; show(link); }, 200);
+  }
   document.addEventListener('pointerover', (event) => {
     if (event.pointerType !== 'mouse') return;
     const link = event.target.closest && event.target.closest('[data-mouse-peek]');
-    if (!link) return;
-    clearTimeout(hideTimer);
-    if (link === active) return;
-    clearTimeout(showTimer);
-    showTimer = setTimeout(() => show(link), 200);
+    if (link) showSoon(link);
+  });
+  // The pointer still on an input once it is typed in, or its menu closed:
+  // moving it shows the card again.
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse' || active || showTimer) return;
+    const el = event.target;
+    if (isInput(el) && el.matches('[data-mouse-peek]') && !busy(el)) showSoon(el);
   });
   document.addEventListener('pointerout', (event) => {
     const link = event.target.closest && event.target.closest('[data-mouse-peek]');
@@ -145,13 +186,24 @@
     if (event.relatedTarget && (link.contains(event.relatedTarget) || (card && card.contains(event.relatedTarget)))) return;
     hideSoon();
   });
+  // Clicking or typing in an input is editing it: its menu, not the card.
+  const editing = (event) => {
+    const el = event.target;
+    if (isInput(el) && el.matches('[data-mouse-peek]')) hide();
+  };
+  document.addEventListener('pointerdown', editing, true);
+  document.addEventListener('input', editing, true);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && active) hide();
+    else editing(event);
+  }, true);
   document.addEventListener('focusin', (event) => {
     const link = event.target.closest && event.target.closest('[data-mouse-peek]');
-    if (link && link.matches(':focus-visible')) show(link);
+    if (link && !isInput(link) && link.matches(':focus-visible')) show(link);
   });
   document.addEventListener('focusout', (event) => {
-    if (event.target.closest && event.target.closest('[data-mouse-peek]')) hideSoon();
+    const link = event.target.closest && event.target.closest('[data-mouse-peek]');
+    if (link && !isInput(link)) hideSoon();
   });
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && active) hide(); });
   document.addEventListener('scroll', () => { if (active) hide(); }, true);
 })();

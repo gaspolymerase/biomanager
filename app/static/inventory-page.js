@@ -236,6 +236,7 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
   /* The ID box offers the identifiers of whichever colony is chosen —
      in the dialog, and in every source cell in the sheet. */
   let sourceRefs = null;   // fetched once, the first time an ID box is used
+  let clicked = null;      // the ID box clicked before its colony's IDs came
   const sourceList = (id) => {
     if (!document.getElementById(id)) {
       const datalist = document.createElement('datalist');
@@ -254,28 +255,54 @@ const INV_WORDS = JSON.parse(document.getElementById('inventory-page-data').text
           option.value = value;
           datalist.append(option);
         });
+        // The click that asked for them opens the menu now they are here.
+        if (clicked && clicked === document.activeElement && clicked.dataset.comboList === id) {
+          BioCombobox.open(clicked);
+        }
       }, () => datalist.remove());
     }
     return id;
   };
+  const MOUSE_KINDS = ['mouse', 'colony'];
+  // The link beside a mouse's ID opens the mouse the sheet was drawn with:
+  // hidden while the box names another one (hovering the box shows that).
+  const followLink = (to) => {
+    const link = to.closest('.source-cell') && to.closest('.source-cell').querySelector('[data-mouse-peek]:not(input)');
+    if (link) link.hidden = to.dataset.mousePeek === undefined || to.value.trim() !== link.dataset.mousePeek;
+  };
+  document.addEventListener('input', (event) => {
+    if (event.target.matches && event.target.matches('.source-cell [data-source-ref]')) followLink(event.target);
+  });
   const pair = (from) => {
-    const box = from.closest('.source-cell, label, fieldset, .record-dialog-body');
+    // Its ID box: in the sheet's cell, or the dialog's next label.
+    let box = from.parentElement;
+    while (box && !box.querySelector('[data-source-ref]')) box = box.parentElement;
     const to = box && box.querySelector('[data-source-ref]');
     if (!to) return;
     const list = from.selectedOptions[0] && from.selectedOptions[0].dataset.list;
-    if (list) to.setAttribute('list', sourceList(list)); else to.removeAttribute('list');
+    // The app's menu only: a list attribute would open WebKit's own too.
+    if (window.BioCombobox) BioCombobox.serve(to, list ? sourceList(list) : '');
+    // Hovering a mouse's ID shows its brief (static/mouse-peek.js).
+    if (MOUSE_KINDS.includes(from.value)) to.dataset.mousePeek = '';
+    else { delete to.dataset.mousePeek; delete to.dataset.mousePeekTag; }
+    followLink(to);
   };
   const sync = () => { if (kind && ref) pair(kind); };
   document.addEventListener('change', (event) => {
     const from = event.target.closest && event.target.closest('[data-source-kind]');
     if (from) pair(from);
   });
-  // A row's ID box gets its colony's list when it is used, not every row's as the page loads.
-  document.addEventListener('focusin', (event) => {
+  // A row's ID box gets its colony's list when it is used, not every row's
+  // as the page loads: on the click, before static/combobox.js opens its
+  // menu for that click, and on reaching it by Tab.
+  const pairCell = (event) => {
     const to = event.target.closest && event.target.closest('.source-cell [data-source-ref]');
     const from = to && to.closest('.source-cell').querySelector('[data-source-kind]');
     if (from) pair(from);
-  });
+    return to;
+  };
+  document.addEventListener('pointerdown', (event) => { clicked = pairCell(event); }, true);
+  document.addEventListener('focusin', pairCell);
   dialog.addEventListener('record-dialog:open', (event) => {
     const { data, isNew } = event.detail || {};
     if (kind && ref) sync();

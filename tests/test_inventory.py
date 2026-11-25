@@ -1246,14 +1246,16 @@ class SampleSourceTests(InventoryCase):
         self.post(self.a, f"/inventory/{self.key}/items/save", data={
             "id": "", "name": name, "attr_source_kind": "mouse", "attr_source_ref": mouse_id})
         html = self.get_ok(self.a, f"/inventory/{self.key}")
-        self.assertIn('title="Custom tag RF"', html)
-        # Hovering the link shows the mouse's brief, its tag among it (static/mouse-peek.js).
+        # Hovering the ID, or the link after it, shows the mouse's brief,
+        # its tag among it (static/mouse-peek.js).
+        self.assertRegex(html, rf'value="{mouse_id}" data-source-ref[^>]*data-mouse-peek data-mouse-peek-tag="RF"')
         self.assertIn(f'data-mouse-peek="{mouse_id}" data-mouse-peek-tag="RF"', html)
         self.assertIn("mouse-peek.js", html)
         # Re-tag the mouse: every sample of it says the new mark, with
         # nothing to update here.
         self.autosave(self.a, f"/colony/mice/{mouse_row}/update", {"ear_tag": "LB"})
-        self.assertIn('title="Custom tag LB"', self.get_ok(self.a, f"/inventory/{self.key}"))
+        self.assertRegex(self.get_ok(self.a, f"/inventory/{self.key}"),
+                         rf'value="{mouse_id}" data-source-ref[^>]*data-mouse-peek-tag="LB"')
 
     def test_the_brief_on_hovering_the_link_gives_the_mouse_s_age(self):
         """The card over a sample's mouse (static/mouse-peek.js, the
@@ -1359,7 +1361,9 @@ class SampleSourceTests(InventoryCase):
         self.assertFlash(r, "There is no mouse 99999999999 in the colony", "warning")
         self.assertEqual(len(items_named(self.key, name)), 1)
         html = self.get_ok(self.a, f"/inventory/{self.key}")   # and the sheet still opens
-        self.assertIn('title="No mouse 99999999999 in the colony"', html)
+        # Hovering the ID says there is no such mouse (static/mouse-peek.js), with no link to one.
+        self.assertRegex(html, r'value="99999999999" data-source-ref[^>]*data-mouse-peek(?![-=])')
+        self.assertNotIn("Open mouse 99999999999 in the colony", html)
 
     def test_a_sample_from_a_missing_mouse_is_saved_with_a_warning(self):
         ref = "99" + uniq("").replace("x", "0")  # digits no colony mouse has
@@ -1369,7 +1373,9 @@ class SampleSourceTests(InventoryCase):
         self.assertFlash(r, f"There is no mouse {ref} in the colony", "warning")
         [sid] = items_named(self.key, name)
         self.assertEqual(attrs_of(sid)["source"]["ref"], ref)
-        self.assertIn(f'title="No mouse {ref} in the colony"', self.get_ok(self.a, f"/inventory/{self.key}"))
+        html = self.get_ok(self.a, f"/inventory/{self.key}")
+        self.assertRegex(html, rf'value="{ref}" data-source-ref[^>]*data-mouse-peek(?![-=])')
+        self.assertNotIn(f"Open mouse {ref} in the colony", html)
 
     def test_a_non_mouse_source_is_not_checked_against_the_colony(self):
         name = uniq("S-fish")
@@ -1378,6 +1384,9 @@ class SampleSourceTests(InventoryCase):
         self.assertEqual([k for k, _ in flashes(r) if k == "warning"], [])
         [sid] = items_named(self.key, name)
         self.assertEqual(attrs_of(sid)["source"], {"kind": "other", "ref": "field trip"})
+        # Not a mouse, so no mouse's brief on hovering it.
+        self.assertNotRegex(self.get_ok(self.a, f"/inventory/{self.key}"),
+                            r'value="field trip" data-source-ref[^>]*data-mouse-peek')
 
     def test_an_invalid_date_in_a_date_column_is_refused(self):
         sid = self.make_item(self.a, self.key, uniq("S"), attr_collected_on=days_ago(2))

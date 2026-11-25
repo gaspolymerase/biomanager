@@ -267,7 +267,7 @@
         <script nonce="{{ csp_nonce() }}">
           /* Custom tag goes wherever this person has hidden it on the mouse
              sheet (data-table.js keeps that choice by column number, on this
-             computer; templates/_mouse_sheet.html), tooltip and all. Before
+             computer; templates/_mouse_sheet.html), the brief's line too. Before
              the sheet sets itself up, so its column is simply off. */
           (function () {
             let hidden = [];
@@ -276,7 +276,6 @@
             const sheet = document.currentScript.closest('.dt-scroll').querySelector('table');
             sheet.querySelectorAll('th[data-mouse-tag]').forEach((th) => { th.dataset.dtOff = '1'; });
             const untag = (root) => {
-              root.querySelectorAll('[data-mouse-tag-title]').forEach((el) => { el.removeAttribute('title'); });
               root.querySelectorAll('[data-mouse-peek-tag]').forEach((el) => { el.removeAttribute('data-mouse-peek-tag'); });
             };
             untag(sheet);

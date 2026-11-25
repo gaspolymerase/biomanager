@@ -8,12 +8,19 @@
  * may refill it. Picking a suggestion sets the value and sends input and
  * change, as typing it would, so a sheet saves it.
  *
+ * A script that picks a field's suggestions as the page is used gives
+ * them with BioCombobox.serve(input, datalistId), not a list attribute:
+ * WebKit opens its own menu for a focused input that has one, before this
+ * can take it off, and the field showed both menus (a sample's source ID).
+ *
  * Keys: typing filters, ↓/↑ move (in a sheet, Alt+↓ opens it, since ↓
  * alone moves down a row), Enter picks, Esc closes.
  */
 (function () {
   'use strict';
 
+  // The most a menu lists: the first 200 (a mouse colony's IDs 1–200) until
+  // typing narrows it.
   const MAX = 200;
   let pop = null;
   let field = null;
@@ -21,15 +28,27 @@
   let active = -1;
   let choosing = false;
 
+  function serve(input, id) {
+    if (!id) { release(input); return; }
+    input.dataset.comboList = id;
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    if (field !== input) input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('autocomplete', 'off');
+  }
+
+  function release(input) {
+    if (field === input) close();
+    delete input.dataset.comboList;
+    ['role', 'aria-autocomplete', 'aria-expanded', 'aria-controls', 'aria-activedescendant']
+      .forEach((name) => input.removeAttribute(name));
+  }
+
   function adopt(input) {
     const id = input.getAttribute('list');
     if (!id) return;
-    input.dataset.comboList = id;
     input.removeAttribute('list');
-    input.setAttribute('role', 'combobox');
-    input.setAttribute('aria-autocomplete', 'list');
-    input.setAttribute('aria-expanded', 'false');
-    input.setAttribute('autocomplete', 'off');
+    serve(input, id);
   }
 
   function scan(node) {
@@ -54,10 +73,12 @@
   }
 
   // What the typed text matches: those starting with it first, then those
-  // with it anywhere. A value that is already one of them shows them all.
-  function match(choices, typed) {
+  // with it anywhere. Opening a field whose value is already one of them
+  // shows them all, to pick another; typing narrows even then (typing a
+  // mouse's 706 passes 70, which is a mouse too).
+  function match(choices, typed, typing) {
     const q = typed.trim().toLowerCase();
-    if (!q || choices.some((c) => c.value.toLowerCase() === q)) return choices.slice(0, MAX);
+    if (!q || (!typing && choices.some((c) => c.value.toLowerCase() === q))) return choices.slice(0, MAX);
     const starts = [];
     const within = [];
     for (const c of choices) {
@@ -130,8 +151,8 @@
     pop.style.top = (down ? box.bottom + 4 : Math.max(edge, box.top - tall - 4)) + 'px';
   }
 
-  function open(input) {
-    items = match(choicesOf(input), input.value);
+  function open(input, typing) {
+    items = match(choicesOf(input), input.value, typing);
     // Nothing to offer, or only what is already written.
     if (!items.length || (items.length === 1 && items[0].value === input.value)) { close(); return; }
     if (field && field !== input) close();
@@ -196,7 +217,7 @@
   const isCombo = (el) => el instanceof HTMLInputElement && el.dataset.comboList !== undefined;
 
   document.addEventListener('input', (event) => {
-    if (!choosing && isCombo(event.target)) open(event.target);
+    if (!choosing && isCombo(event.target)) open(event.target, true);
   });
   document.addEventListener('pointerdown', (event) => {
     if (isCombo(event.target) && !event.target.disabled && !event.target.readOnly) {
@@ -259,5 +280,7 @@
   if (document.body) start();
   else document.addEventListener('DOMContentLoaded', start);
 
-  window.BioCombobox = { adopt, close };
+  // open: show a field's menu now, as clicking it does (its suggestions
+  // arrived after the click that asked for them).
+  window.BioCombobox = { adopt, serve, release, open, close };
 })();
