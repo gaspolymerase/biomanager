@@ -581,5 +581,9 @@
   "e.g. PL": "如 PL",
   "Its %(nouns)s are numbered on their own after the prefix: PL1, PL2… Leave it empty to name them yourself.": "它的%(nouns)s在前缀后面单独编号：PL1、PL2… 留空则由你自己命名。",
   "New entries of this type left without a name are numbered after it: T1, T2…": "这个类型的新条目不填名称时，按它编号：T1、T2…",
-  "A new %(noun)s left without a name is numbered after its prefix, each type on its own (T1, T2…; BL1…); without a prefix it is not.": "新%(noun)s不填名称时，按类型的前缀自动编号，每个类型单独计数（T1、T2…；BL1…）；没有前缀的类型不自动编号。"
+  "A new %(noun)s left without a name is numbered after its prefix, each type on its own (T1, T2…; BL1…); without a prefix it is not.": "新%(noun)s不填名称时，按类型的前缀自动编号，每个类型单独计数（T1、T2…；BL1…）；没有前缀的类型不自动编号。",
+  "Only an admin, or whoever created %(name)s, can change a prefix.": "只有管理员或%(name)s的创建者可以修改前缀。",
+  "%(type)s is not one of the types of %(name)s.": "%(type)s不是%(name)s的类型之一。",
+  "%(type)s is numbered after %(prefix)s: the next one left without a %(name)s is %(code)s.": "%(type)s按 %(prefix)s 编号：下一个不填%(name)s的是 %(code)s。",
+  "%(type)s is not numbered any more: you name its %(nouns)s yourself.": "%(type)s不再自动编号：它的%(nouns)s由你自己命名。"
 }

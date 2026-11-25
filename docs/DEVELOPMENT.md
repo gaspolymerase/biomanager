@@ -1917,8 +1917,11 @@ pages are in `app/lab_routes.py`.
   anyone who can open it). Settings `prefixes` ({type: prefix},
   `normalise_settings` keeps those of listed types; `prefix_problems`
   refuses two alike or one ending in a digit) come from the picker,
-  `add_type`'s prefix and Configure's **Prefix** column on the type rows
-  (`_prefixes_from`: a renamed type keeps its own unless the row changes it).
+  `add_type`'s prefix, Configure's **Prefix** column on the type rows
+  (`_prefixes_from`: a renamed type keeps its own unless the row changes it)
+  and `type_prefix` (`POST /inventory/<key>/types/prefix`, one type's, with
+  Configure's permission; it flashes `next_code`, the name the next one
+  gets; the action `inventory_type` posts to it).
   `inventory_service._new_entries_named_by_type`, a `before_flush` hook,
   names a new item with no name and a prefixed type `prefix + n`, however it
   was made: n is one past the highest after that prefix among the
@@ -3716,6 +3719,12 @@ page itself.
   text, so an assistant edits from the page as it is now; resolve gives
   pages that path, and `_pages_titled` only finds pages the person may read.
   `inventory_renumber` posts to the inventory's **Renumber** page (below).
+  `inventory_type` posts a type's prefix to `/types/prefix` (Configure's
+  permission) or a new type to `/types/add` (the + button's, anyone's); its
+  summary names the next code (`next_code`) and its `shows` the prefix
+  before → after. A `shows` record stands in place of the change history's
+  record of the same row (here the database's settings, one JSON), and
+  `/vocabulary` lists each inventory's `prefixes`.
   `calendar_event_new` and `task_new` (a to-do: yours, or with `shared` the
   lab's; a day is optional) post to `/calendar/items` and `equipment_booking_new`
   to `/calendar/bookings`. The kinds `inventory_item`, `plasmid`, `equipment`,

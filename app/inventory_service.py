@@ -288,6 +288,13 @@ def _highest_code(session, module_id: int, prefix: str, also=()) -> tuple[int, i
     return best, width
 
 
+def next_code(session, module_id: int, prefix: str) -> str:
+    """The name the next entry numbered after this prefix gets (B523),
+    without taking it: what changing a type's prefix will start from."""
+    best, width = _highest_code(session, module_id, prefix)
+    return code_text(prefix, best + 1, width)
+
+
 def type_codes(session, mv) -> dict[str, dict]:
     """{type: {"prefix", "next", "width"}}: what the next entry of each
     numbered type is named, without taking it (the New dialog says it)."""

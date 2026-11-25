@@ -1,4 +1,5 @@
 {
+  "An AI assistant can give a sample type its prefix (*give tissue the prefix B*), saying the name the next one gets.": "AI 助手可以给样本类型设置前缀（*给组织填前缀 B*），并告诉你下一个样本的编号。",
   "A black-and-white **Mono** theme in **Settings → Appearance & language**: no glass and no colour, black buttons, white in dark mode.": "**设置 → 外观与语言** 里多了黑白主题 **黑白**：没有玻璃效果，也没有颜色，按钮是黑色的，深色模式下是白色。",
   "**Bench** is no longer a theme; if you chose it, your choices stay as they were.": "**实验台** 不再是一个主题；选过它的人，原来的设置保持不变。",
   "**Samples** are numbered by type: give a type a prefix in **Configure** and a sample left without a Sample ID is named after it, tissue T1, T2…, blood BL1…": "**样本** 按类型编号：在 **配置** 里给类型填一个前缀，不填样本编号的样本就按它命名，组织 T1、T2……，血液 BL1……",

@@ -30,6 +30,11 @@ RELEASES_URL = "https://github.com/gaspolymerase/biomanager/releases/tag/v{versi
 # Newest first. Each line is plain text; **bold** names a button or a page.
 # Each line's Chinese goes in app/translations/zh/whats_new.json (a test checks).
 NOTES: dict[str, dict[str, list[str]]] = {
+    "2.13.1": {
+        "new": [
+            "An AI assistant can give a sample type its prefix (*give tissue the prefix B*), saying the name the next one gets.",
+        ],
+    },
     "2.13.0": {
         "new": [
             "A black-and-white **Mono** theme in **Settings → Appearance & language**: no glass and no colour, black buttons, white in dark mode.",
