@@ -158,6 +158,54 @@ class UndoRules(AppTestCase):
         r = self.post(self.a, "/batches/987654321/undo")
         self.assertFlash(r, "no longer exists", "error")
 
+    def describe(self, batch):
+        """undo.describe for this batch, and the SQL statements it ran."""
+        from sqlalchemy import event
+        from app import undo as undo_service
+        from app.db import SessionLocal, engine as db_engine
+        from app.models import BatchRecord
+        seen = []
+
+        def note(conn, cursor, statement, parameters, context, executemany):
+            seen.append(statement)
+        with SessionLocal() as session:
+            record = session.get(BatchRecord, batch)
+            event.listen(db_engine, "before_cursor_execute", note)
+            try:
+                summary = undo_service.describe(session, record)
+            finally:
+                event.remove(db_engine, "before_cursor_execute", note)
+        return summary, seen
+
+    def test_describing_a_batch_takes_as_many_queries_however_large_it_is(self):
+        # Settings' History describes the latest dozen batches each time it
+        # opens; one query per entry made an import of 3000 primers take
+        # 10–20 seconds (#166).
+        small = self.bulk_purpose(self.a, [self.make_cage(self.a, purpose="Holding")], "Breeding")
+        cages = [self.make_cage(self.a, purpose="Holding") for _ in range(12)]
+        large = self.bulk_purpose(self.a, cages, "Breeding")
+        small_summary, small_sql = self.describe(small)
+        large_summary, large_sql = self.describe(large)
+        self.assertEqual((small_summary["entries"], large_summary["entries"]), (1, 12))
+        self.assertEqual(large_summary["updates"], 12)
+        self.assertEqual(len(large_sql), len(small_sql), large_sql)
+
+    def test_it_counts_the_records_changed_after_the_batch(self):
+        cages = [self.make_cage(self.a, purpose="Holding") for _ in range(3)]
+        batch = self.bulk_purpose(self.a, cages, "Breeding")
+        self.assertEqual(self.describe(batch)[0]["blocked"], [])
+        self.bulk_purpose(self.a, cages[:2], "Experiment")
+        blocked = self.describe(batch)[0]["blocked"]
+        self.assertEqual(len(blocked), 1, blocked)
+        self.assertIn("2 records changed after this batch", blocked[0])
+
+    def test_its_own_undo_and_redo_are_not_later_edits(self):
+        cages = [self.make_cage(self.a, purpose="Holding") for _ in range(2)]
+        batch = self.bulk_purpose(self.a, cages, "Breeding")
+        self.post(self.a, f"/batches/{batch}/undo")
+        self.post(self.a, f"/batches/{last_batch()[0]}/undo")      # the redo
+        self.assertEqual(self.describe(batch)[0]["blocked"], [])
+
     def test_batch_history_lists_a_members_own_batches(self):
         cage = self.make_cage(self.m, purpose="Holding")
         self.bulk_purpose(self.m, [cage], uniq("Purpose "))

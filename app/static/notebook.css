@@ -122,9 +122,11 @@
 }
 .nb-side-capsule > button { width: 30px; height: 30px; margin: 0; border-radius: 50%; }
 /* On Home, a topic or a library it sits in the title row above, where a
-   page's path would be. */
+   page's path would be: over the title row (.toolbar, z-index 35), whose
+   empty title would otherwise take its clicks, and under the docked
+   sidebar (37). */
 .notebook-main { position: relative; }
-.nb-side-show.nb-side-capsule { position: absolute; z-index: 5; top: calc(-1 * var(--toolbar-h, 52px) + (var(--toolbar-h, 52px) - 34px) / 2); left: 18px; width: fit-content; margin: 0; }
+.nb-side-show.nb-side-capsule { position: absolute; z-index: 36; top: calc(-1 * var(--toolbar-h, 52px) + (var(--toolbar-h, 52px) - 34px) / 2); left: 18px; width: fit-content; margin: 0; }
 .nb-crumb-capsule { margin-right: 6px; }
 @media (min-width: 768px) {
   body.nb-side-is-closed .nb-crumb-capsule { display: inline-flex; }
