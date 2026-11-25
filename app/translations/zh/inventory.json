@@ -3,7 +3,6 @@
   "requested by": "申请人",
   "Required": "必填",
   "Open mouse %(id)s in the colony": "在鼠群中打开小鼠 %(id)s",
-  "No mouse %(id)s in the colony": "鼠群中没有小鼠 %(id)s",
   "Open plasmid #%(number)s": "打开质粒 #%(number)s",
   "Worked out from the sequence": "根据序列算出",
   "Board": "看板",

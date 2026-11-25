@@ -1,4 +1,6 @@
 {
+  "Hovering a sample's mouse ID in **Samples** shows that mouse: its sex, age, genotype, cage and more.": "在 **样本** 里，把鼠标停在样本的小鼠编号上，就能看到这只小鼠：性别、年龄、基因型、笼位等。",
+  "A sample's mouse ID opens one menu, not two, in the Mac app and Safari, and typing narrows its IDs.": "在 Mac 应用和 Safari 里，样本的小鼠编号只弹出一个下拉框，不再是两个；打字可以缩小编号范围。",
   "In the notebook, the button that shows the sidebar again works on its home, a topic and the libraries.": "记录本里重新显示侧栏的按钮，在记录本首页、主题和各个库页面上又能用了。",
   "**Settings** and **Batch history** open at once in a lab that has imported thousands of records.": "导入了几千条记录的实验室，打开 **设置** 和 **批量操作记录** 也不用再等。",
   "The loading animation moves in the Mac app and Safari while a page loads, instead of standing still, and the well plate, the tenth, now shows too.": "在 Mac 应用和 Safari 里，页面加载时的小动画会动了，不再定住不动；第十个动画（孔板）现在也会出现了。",
