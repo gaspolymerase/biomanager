@@ -233,7 +233,15 @@ reads the source for the rules marked *(tested)*.
   Approving a proposal starts out as slow. It watches the Navigation API
   where the browser has one, else links and forms, and skips downloads,
   new tabs and anything under `data-no-loading`; `data-loading-label` names
-  what a button does.
+  what a button does. WebKit (Safari, the Mac app) stops painting a page
+  the moment it starts to leave it, and only the compositor goes on, moving
+  and fading boxes. So each moving piece of an animation is a box of its own
+  (`.ld-p`) animated by transform and opacity alone, with no delay still to
+  come (the half-second wait is in `.ld-later`'s own keyframes), never a
+  shape animated inside an `<svg>`, an SVG filter or a mask; and in WebKit
+  the navigation is held for one frame while the animation is drawn, then
+  sent again as it was (a form from the event's `formData`). The check
+  (`tests/js/loader.check.mjs`) keeps these rules.
 - **Tooltips** from `data-tooltip` also show for a moment on a tap.
 - **Purpose pills** take `data-tone` from the lab's purpose list
   (`cage_rows.purpose_tones`): Breeding brand, Breeder green, Experiment

@@ -1,6 +1,13 @@
 /* The loading animations (static/loader.js). Everything is prefixed ld-, so
    nothing here can restyle the app. One beat, 2.4 s, runs through all ten;
-   swings are sine curves, drops fall under gravity, pops overshoot a little. */
+   swings are sine curves, drops fall under gravity, pops overshoot a little.
+
+   WebKit (Safari, the Mac app) stops painting a page as soon as it starts to
+   leave it, and only the compositor goes on: it moves and fades boxes, never
+   the shapes inside an <svg>. So each moving piece is a box of its own
+   (.ld-p, over the whole 96 × 96 picture, turning about the point loader.js
+   gives it), animated by transform and opacity alone, and no animation waits
+   to start: a delay still to come is taken a whole beat back instead. */
 
 :root {
   --ld-sky: #7DB4F5; --ld-sky-l: #D6E8FD; --ld-coral: #FF9F8F; --ld-mint: #6FD3B2;
@@ -37,19 +44,28 @@
 .ld { display: flex; flex-direction: column; align-items: center; gap: 12px;
   animation: ld-enter .4s cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ld-enter { from { opacity: 0; scale: .94; } to { opacity: 1; scale: 1; } }
-.ld-art { width: 88px; height: 88px; }
-.ld-art svg { display: block; width: 100%; height: 100%; overflow: visible; }
+/* Expected to be quick: clear for the first half second (THRESHOLD in loader.js), then as above. */
+.ld-overlay.ld-later { animation: ld-fade-later .7s linear both; }
+@keyframes ld-fade-later { 0%, 71.43% { opacity: 0; animation-timing-function: ease-out; } 100% { opacity: 1; } }
+.ld-later .ld { animation: ld-enter-later .9s linear both; }
+@keyframes ld-enter-later {
+  0%, 55.56% { opacity: 0; scale: .94; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+  100% { opacity: 1; scale: 1; } }
+.ld-art { position: relative; width: 88px; height: 88px; }
+.ld-stage { position: absolute; left: 0; top: 0; width: 96px; height: 96px; transform: scale(.9167); transform-origin: 0 0; }
+.ld-p, .ld-stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ld-stage svg { display: block; overflow: visible; }
 .ld-label { font-size: 13px; color: var(--ld-text); }
 
-.ld-blink { transform-box: fill-box; transform-origin: center; animation: ld-blink 3.6s infinite; }
+.ld-blink { animation: ld-blink 3.6s infinite; }
 @keyframes ld-blink { 0%, 91%, 97%, 100% { scale: 1 1; } 94% { scale: 1 .1; } }
 
 /* DNA */
-.ld-dna { transform-box: fill-box; transform-origin: center;
+.ld-dna {
   animation: ld-dnaY 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate, ld-dnaZ 2.4s linear infinite;
   animation-delay: var(--d), var(--d); }
 .ld-dna-b { animation-delay: calc(var(--d) - 1.2s), calc(var(--d) - 1.2s); }
-.ld-rung { transform-box: fill-box; transform-origin: center;
+.ld-rung {
   animation: ld-rung 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; animation-delay: var(--d); }
 @keyframes ld-dnaY { from { translate: 0 -13px; } to { translate: 0 13px; } }
 @keyframes ld-dnaZ {
@@ -67,14 +83,14 @@
 @keyframes ld-oy { from { translate: 0 -6px; } to { translate: 0 6px; } }
 
 /* Membrane */
-.ld-ball { transform-box: fill-box; transform-origin: 50% 100%; animation: ld-ball 1.2s infinite; }
+.ld-ball { animation: ld-ball 1.2s infinite; }
 @keyframes ld-ball {
   0% { translate: 0 -24px; scale: 1 1; animation-timing-function: cubic-bezier(.55, 0, 1, .45); }
   40% { translate: 0 0; scale: .94 1.08; animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
   50% { translate: 0 4px; scale: 1.22 .8; animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
   60% { translate: 0 0; scale: .94 1.08; animation-timing-function: cubic-bezier(0, .55, .45, 1); }
   100% { translate: 0 -24px; scale: 1 1; } }
-.ld-lip { animation: ld-lip 1.2s infinite; animation-delay: var(--dl); }
+.ld-lip { animation: ld-lip 1.2s infinite; animation-delay: calc(var(--dl) - 1.2s); }
 @keyframes ld-lip {
   0%, 38% { translate: 0 0; }
   50% { translate: 0 calc(var(--dip) * 1px); animation-timing-function: cubic-bezier(.3, 0, .3, 1); }
@@ -82,9 +98,17 @@
   82%, 100% { translate: 0 0; } }
 
 /* Cell division */
-.ld-mi-a, .ld-mi-b { transform-box: fill-box; transform-origin: center; animation: 3.6s infinite; }
+.ld-mi-a, .ld-mi-b, .ld-mi-n { animation: 3.6s infinite; }
 .ld-mi-a { animation-name: ld-miA; }
 .ld-mi-b { animation-name: ld-miB; }
+/* The waist between the two daughters: thins to a thread as they part, which breaks as one drifts off. */
+.ld-mi-n { animation-name: ld-miN; }
+@keyframes ld-miN {
+  0%, 34% { scale: 1 1; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  44% { scale: 1 .3; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  52%, 74% { scale: .55 .14; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+  84%, 96% { scale: .55 0; }
+  100% { scale: 1 1; } }
 .ld-eyes-a { animation: ld-eyesA 3.6s infinite; }
 @keyframes ld-eyesA { 0%, 42% { opacity: 0; } 52%, 100% { opacity: 1; } }
 @keyframes ld-miA {
@@ -104,42 +128,43 @@
   100% { translate: 0 0; scale: 1; } }
 
 /* Mouse */
-.ld-m-head { transform-box: view-box; transform-origin: 56px 56px; animation: ld-sniff 2.4s infinite; }
+.ld-m-head { animation: ld-sniff 2.4s infinite; }
 @keyframes ld-sniff {
   0% { rotate: 0deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
   7% { rotate: -6deg; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
   13% { rotate: -1.5deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
   19% { rotate: -6deg; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
   32%, 100% { rotate: 0deg; } }
-.ld-m-nose { transform-box: fill-box; transform-origin: center; animation: ld-nose 2.4s cubic-bezier(.3, 0, .2, 1) infinite; }
+.ld-m-nose { animation: ld-nose 2.4s cubic-bezier(.3, 0, .2, 1) infinite; }
 @keyframes ld-nose { 0%, 13%, 28%, 100% { scale: 1; } 7%, 19% { scale: 1.4; } }
-.ld-m-whisk { transform-box: view-box; transform-origin: 75px 55px; animation: ld-whisk 2.4s infinite; }
+.ld-m-whisk { animation: ld-whisk 2.4s infinite; }
 @keyframes ld-whisk {
   0%, 2% { rotate: 0deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
   10% { rotate: -10deg; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
   16% { rotate: -2deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
   22% { rotate: -10deg; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
   38%, 100% { rotate: 0deg; } }
-.ld-m-ear { transform-box: view-box; transform-origin: 58px 46px; animation: ld-ear 2.4s infinite; }
+.ld-m-ear { animation: ld-ear 2.4s infinite; }
 @keyframes ld-ear {
   0%, 56% { rotate: 0deg; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
   61% { rotate: -14deg; animation-timing-function: cubic-bezier(.34, 1.5, .64, 1); }
   70%, 100% { rotate: 0deg; } }
-.ld-m-body { transform-box: fill-box; transform-origin: 50% 100%; animation: ld-breath 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+.ld-m-body { animation: ld-breath 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
 @keyframes ld-breath { from { scale: 1 1; } to { scale: 1.015 1.045; } }
-.ld-m-tail { transform-box: view-box; transform-origin: 27px 66px; animation: ld-tail 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+.ld-m-tail { animation: ld-tail 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
 @keyframes ld-tail { from { rotate: -6deg; } to { rotate: 7deg; } }
 
-/* Bacterium */
+/* Bacterium: the flagellum fades out towards its end. */
+.ld-fade-tail { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 29.2px); mask-image: linear-gradient(90deg, transparent 4px, #000 29.2px); }
 .ld-flag { animation: ld-flag .5s linear infinite; }
 @keyframes ld-flag { from { translate: 0 0; } to { translate: -16px 0; } }
-.ld-bac { transform-box: view-box; transform-origin: 56px 48px; animation: ld-bac 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+.ld-bac { animation: ld-bac 1.2s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
 @keyframes ld-bac { from { rotate: -3deg; translate: 0 -1.5px; } to { rotate: 3deg; translate: 0 1.5px; } }
-.ld-mote { opacity: 0; animation: ld-mote 2.4s linear infinite; animation-delay: var(--d); }
+.ld-mote { opacity: 0; animation: ld-mote 2.4s linear infinite; animation-delay: calc(var(--d) - 2.4s); }
 @keyframes ld-mote { 0% { translate: 0 0; opacity: 0; } 20%, 80% { opacity: .8; } 100% { translate: -60px 0; opacity: 0; } }
 
 /* Petri dish */
-.ld-col { transform-box: fill-box; transform-origin: center; scale: 0; animation: ld-col 4.8s infinite; animation-delay: var(--d); }
+.ld-col { scale: 0; animation: ld-col 4.8s infinite; animation-delay: calc(var(--d) - 4.8s); }
 @keyframes ld-col {
   0% { scale: 0; opacity: 1; animation-timing-function: cubic-bezier(.34, 1.7, .64, 1); }
   8% { scale: 1; opacity: 1; }
@@ -149,18 +174,18 @@
 /* Zebrafish: three joints, each later than the one before. */
 .ld-z-all { animation: ld-zDrift 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
 @keyframes ld-zDrift { from { translate: 0 -2px; } to { translate: 0 2px; } }
-.ld-z-h, .ld-z-m, .ld-z-t { transform-box: view-box; animation: .6s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
-.ld-z-h { transform-origin: 60px 48px; animation-name: ld-zH; }
-.ld-z-m { transform-origin: 50px 48px; animation-name: ld-zM; animation-delay: -.12s; }
-.ld-z-t { transform-origin: 35px 48px; animation-name: ld-zT; animation-delay: -.26s; }
+.ld-z-h, .ld-z-m, .ld-z-t { animation: .6s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
+.ld-z-h { animation-name: ld-zH; }
+.ld-z-m { animation-name: ld-zM; animation-delay: -.12s; }
+.ld-z-t { animation-name: ld-zT; animation-delay: -.26s; }
 @keyframes ld-zH { from { rotate: -2.5deg; } to { rotate: 2.5deg; } }
 @keyframes ld-zM { from { rotate: -5deg; } to { rotate: 5deg; } }
 @keyframes ld-zT { from { rotate: -12deg; } to { rotate: 12deg; } }
-.ld-z-bub { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ld-zBub 2.4s cubic-bezier(.22, 1, .36, 1) infinite; animation-delay: var(--d); }
+.ld-z-bub { opacity: 0; animation: ld-zBub 2.4s cubic-bezier(.22, 1, .36, 1) infinite; animation-delay: calc(var(--d) - 2.4s); }
 @keyframes ld-zBub { 0% { translate: 0 0; scale: .4; opacity: 0; } 15% { opacity: 1; } 100% { translate: 5px -22px; scale: 1; opacity: 0; } }
 
 /* Pipette */
-.ld-drop { transform-box: fill-box; transform-origin: 50% 0; animation: ld-drop 2.4s infinite; }
+.ld-drop { animation: ld-drop 2.4s infinite; }
 @keyframes ld-drop {
   0% { scale: .15; translate: 0 0; opacity: 1; animation-timing-function: cubic-bezier(.33, 1, .68, 1); }
   46% { scale: 1; translate: 0 0; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
@@ -168,15 +193,15 @@
   58% { scale: 1 1; translate: 0 4px; animation-timing-function: cubic-bezier(.11, 0, .5, 0); }
   79% { scale: .88 1.18; translate: 0 38px; opacity: 1; }
   80%, 100% { scale: .88 1.18; translate: 0 38px; opacity: 0; } }
-.ld-ring { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ld-ring 2.4s infinite; animation-delay: var(--d); }
+.ld-ring { opacity: 0; animation: ld-ring 2.4s infinite; animation-delay: calc(var(--d) - 2.4s); }
 @keyframes ld-ring {
-  0% { scale: .3; opacity: 1; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
-  60%, 100% { scale: 4.4 3.2; opacity: 0; } }
-.ld-pool { transform-box: fill-box; transform-origin: center; animation: ld-pool 2.4s infinite; }
+  0% { scale: .068 .094; opacity: 1; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+  60%, 100% { scale: 1 1; opacity: 0; } }
+.ld-pool { animation: ld-pool 2.4s infinite; }
 @keyframes ld-pool { 0%, 79% { scale: 1 1; } 84% { scale: 1.03 .78; animation-timing-function: cubic-bezier(.34, 1.5, .64, 1); } 96%, 100% { scale: 1 1; } }
 
 /* Well plate */
-.ld-well { transform-box: fill-box; transform-origin: center; scale: 0; animation: ld-well 2.4s infinite; animation-delay: var(--d); }
+.ld-well { scale: 0; animation: ld-well 2.4s infinite; animation-delay: calc(var(--d) - 2.4s); }
 @keyframes ld-well {
   0% { scale: 0; opacity: 1; animation-timing-function: cubic-bezier(.34, 1.6, .64, 1); }
   14% { scale: 1; opacity: 1; }
@@ -185,7 +210,7 @@
 
 /* Less motion asked for: the picture only breathes. */
 @media (prefers-reduced-motion: reduce) {
-  .ld-art svg * { animation: none !important; }
+  .ld-p { animation: none !important; }
   .ld-col, .ld-well { scale: 1; }
   .ld-art { animation: ld-calm 2.4s cubic-bezier(.37, 0, .63, 1) infinite alternate; }
   @keyframes ld-calm { from { opacity: .5; } to { opacity: 1; } }
