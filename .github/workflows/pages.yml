@@ -20,11 +20,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
@@ -36,8 +33,20 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
+
+  # A job of its own: deploy-pages run straight after the upload, in the
+  # same job, often found no artifact yet ("No artifacts named
+  # github-pages"), since GitHub lists a new artifact a moment later.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+      - uses: actions/checkout@v7
       # Tell Bing and the other IndexNow engines which pages this push changed
       # (every page when run by hand), so they crawl them again now. A failure
       # here leaves the site published.
